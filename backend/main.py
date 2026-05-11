@@ -1,4 +1,7 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List, Any
@@ -462,3 +465,12 @@ def api_chart_data(req: ChartDataRequest):
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
+
+# ── Servir React (debe ir AL FINAL, después de todas las rutas /api/) ─────────
+_static = os.path.join(os.path.dirname(__file__), "static")
+if os.path.exists(_static):
+    app.mount("/assets", StaticFiles(directory=os.path.join(_static, "assets")), name="assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        return FileResponse(os.path.join(_static, "index.html"))
