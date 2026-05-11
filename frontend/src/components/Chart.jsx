@@ -1,258 +1,107 @@
-import { useEffect, useRef } from 'react'
+import {
+  ScatterChart, Scatter, XAxis, YAxis, CartesianGrid,
+  Tooltip, Legend, ResponsiveContainer, LineChart, Line,
+  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
+} from 'recharts'
 
-let Plotly = null
-
-async function getPlotly() {
-  if (!Plotly) {
-    Plotly = (await import('plotly.js-dist-min')).default
-  }
-  return Plotly
+function zipXY(xs, ys) {
+  if (!xs || !ys) return []
+  return xs.map((x, i) => ({ x, y: ys[i] })).filter(d => d.y != null && isFinite(d.y))
 }
+
+function yBounds(data) {
+  const vals = data.map(d => Math.abs(d.y)).filter(isFinite)
+  const mx = Math.max(...vals, 1)
+  return [-mx * 1.25, mx * 1.25]
+}
+
+const CrossShape = ({ cx, cy }) => {
+  const s = 6
+  return <path d={`M${cx-s},${cy-s}L${cx+s},${cy+s}M${cx+s},${cy-s}L${cx-s},${cy+s}`} stroke="#EF4444" strokeWidth={2.2} fill="none"/>
+}
+
+const RootShape = ({ cx, cy }) => (
+  <circle cx={cx} cy={cy} r={7} fill="#00E676" stroke="white" strokeWidth={2}/>
+)
+
+const fmt6 = v => typeof v === 'number' ? v.toFixed(6) : v
+const fmtAxis = v => {
+  if (Math.abs(v) >= 1000 || (Math.abs(v) < 0.01 && v !== 0)) return v.toExponential(1)
+  return parseFloat(v.toFixed(3)).toString()
+}
+const gridStyle = { stroke: 'rgba(200,200,200,0.25)', strokeDasharray: '3 3' }
+const axisStyle = { fontSize: 11, fill: '#64748b' }
 
 export default function Chart({ f, raiz, xMin, xMax, iteraciones, chartKey, isPuntoFijo = false, isRegresion = false }) {
-  const divRef = useRef()
+  if (!f || raiz == null) return null
+  const funcData = zipXY(f.x, f.y)
+  if (funcData.length === 0) return null
 
-  useEffect(() => {
-    if (!f || raiz == null) return
-    let cancelled = false
+  const [yMin, yMax] = yBounds(funcData)
+  const xL = funcData[0]?.x ?? xMin
+  const xR = funcData[funcData.length - 1]?.x ?? xMax
+  const yxData = isPuntoFijo ? funcData.map(d => ({ x: d.x, y: d.x })) : []
+  const iterData = iteraciones && iteraciones.length > 0
+    ? iteraciones.slice(0, -1).map(r => ({ x: r.x, y: isPuntoFijo ? r.x : 0 }))
+    : []
+  const regPoints = isRegresion && iteraciones?.puntos ? iteraciones.puntos.map(p => ({ x: p.x, y: p.y })) : []
+  const rootPoint = [{ x: raiz, y: isPuntoFijo ? raiz : 0 }]
 
-    async function draw() {
-      const P = await getPlotly()
-      if (cancelled) return
-
-      const x = []
-      const y = []
-      const radio = Math.max(Math.abs(raiz - xMin), Math.abs(raiz - xMax))
-      const margin = radio * 1.1
-      const xL = raiz - margin, xR = raiz + margin
-      const n = 500
-
-      // Build x/y arrays for the function
-      if (!isRegresion) {
-        // x array from backend is already built; we replicate here using the provided data
-        for (let i = 0; i <= n; i++) {
-          const xi = xL + (i / n) * (xR - xL)
-          x.push(xi)
-        }
-        // y will be provided by parent via chartData prop instead — see below
-      }
-
-      const traces = []
-
-      if (isRegresion && f) {
-        // f is an object: { x: [...], y: [...] } for regression line
-        traces.push({
-          x: f.x, y: f.y,
-          mode: 'lines', name: 'Recta de regresión',
-          line: { color: '#3b82f6', width: 3 }
-        })
-        // Data points
-        if (iteraciones?.puntos) {
-          traces.push({
-            x: iteraciones.puntos.map(p => p.x),
-            y: iteraciones.puntos.map(p => p.y),
-            mode: 'markers', name: 'Valores',
-            marker: { symbol: 'x', size: 10, color: '#EF4444' }
-          })
-        }
-        traces.push({
-          x: [raiz], y: [0],
-          mode: 'markers', name: 'Raíz',
-          marker: { size: 12, color: '#00E676', line: { color: 'white', width: 2 } }
-        })
-      } else if (f.x && f.y) {
-        // f is chart data {x, y}
-        traces.push({
-          x: f.x, y: f.y,
-          mode: 'lines', name: isPuntoFijo ? 'g(x)' : 'f(x)',
-          line: { color: '#3b82f6', width: 3 }
-        })
-
-        if (isPuntoFijo) {
-          traces.push({
-            x: f.x, y: f.x,
-            mode: 'lines', name: 'y = x',
-            line: { color: '#FFCA28', width: 2, dash: 'dash' }
-          })
-        }
-
-        // Iteration traces
-        if (iteraciones && iteraciones.length > 0) {
-          const xiArr = iteraciones.slice(0, -1).map(r => r.x)
-          if (isPuntoFijo) {
-            traces.push({
-              x: xiArr, y: xiArr,
-              mode: 'markers', name: 'Iteraciones x_i',
-              marker: { symbol: 'x', size: 10, color: '#EF4444' }
-            })
-            traces.push({
-              x: [raiz], y: [raiz],
-              mode: 'markers', name: 'Punto de Convergencia',
-              marker: { size: 12, color: '#00E676', line: { color: 'white', width: 2 } }
-            })
-          } else {
-            traces.push({
-              x: xiArr, y: new Array(xiArr.length).fill(0),
-              mode: 'markers', name: 'Rastro x_i',
-              text: xiArr.map((_, i) => `x_${i}`),
-              marker: { symbol: 'x', size: 10, color: '#EF4444' }
-            })
-            traces.push({
-              x: [raiz], y: [0],
-              mode: 'markers', name: 'Raíz',
-              marker: { size: 12, color: '#00E676', line: { color: 'white', width: 2 } }
-            })
-          }
-        } else {
-          traces.push({
-            x: [raiz], y: [isPuntoFijo ? raiz : 0],
-            mode: 'markers', name: isPuntoFijo ? 'Punto de Convergencia' : 'Raíz',
-            marker: { size: 12, color: '#00E676', line: { color: 'white', width: 2 } }
-          })
-        }
-      }
-
-      const yVals = traces.flatMap(t => (t.y || []).filter(v => v != null && isFinite(v)))
-      const yMax = Math.max(...yVals.map(Math.abs), 1)
-
-      const layout = {
-        template: 'plotly_white',
-        dragmode: false,
-        hovermode: 'x unified',
-        margin: { l: 40, r: 40, t: 60, b: 40 },
-        legend: { orientation: 'h', yanchor: 'bottom', y: 1.08, xanchor: 'center', x: 0.5 },
-        xaxis: {
-          range: [xL, xR],
-          showgrid: true, gridcolor: 'rgba(200,200,200,0.2)',
-          zeroline: true, zerolinecolor: 'rgba(176,196,222,0.8)', zerolinewidth: 2.5
-        },
-        yaxis: {
-          range: [-yMax * 1.2, yMax * 1.2],
-          showgrid: true, gridcolor: 'rgba(200,200,200,0.2)',
-          zeroline: true, zerolinecolor: 'rgba(176,196,222,0.8)', zerolinewidth: 2.5
-        },
-        paper_bgcolor: 'white',
-        plot_bgcolor: 'white',
-      }
-
-      const config = {
-        scrollZoom: false, doubleClick: false, displaylogo: false,
-        modeBarButtons: [['zoomIn2d', 'zoomOut2d', 'resetViews']]
-      }
-
-      if (divRef.current) {
-        P.react(divRef.current, traces, layout, config)
-      }
-    }
-
-    draw()
-    return () => { cancelled = true }
-  }, [f, raiz, xMin, xMax, iteraciones, chartKey, isPuntoFijo, isRegresion])
-
-  return <div ref={divRef} style={{ width: '100%', minHeight: 360 }} />
+  return (
+    <ResponsiveContainer width="100%" height={360}>
+      <ScatterChart margin={{ top: 16, right: 16, bottom: 8, left: 8 }}>
+        <CartesianGrid {...gridStyle}/>
+        <XAxis type="number" dataKey="x" domain={[xL, xR]} tickFormatter={fmtAxis} tick={axisStyle} tickLine={false}/>
+        <YAxis type="number" dataKey="y" domain={[yMin, yMax]} tickFormatter={fmtAxis} tick={axisStyle} tickLine={false} width={60}/>
+        <Tooltip cursor={{ strokeDasharray: '3 3' }} formatter={(v) => [fmt6(v), '']} contentStyle={{ fontSize: 12, borderRadius: 8, border: '0.5px solid #e2e8f0' }}/>
+        <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }}/>
+        <Scatter name={isPuntoFijo ? 'g(x)' : 'f(x)'} data={funcData} line={{ stroke: '#3b82f6', strokeWidth: 2.5 }} shape={() => null} legendType="line" fill="#3b82f6"/>
+        {isPuntoFijo && <Scatter name="y = x" data={yxData} line={{ stroke: '#FFCA28', strokeWidth: 2, strokeDasharray: '5 5' }} shape={() => null} legendType="line" fill="#FFCA28"/>}
+        {isRegresion && regPoints.length > 0 && <Scatter name="Valores" data={regPoints} shape={<CrossShape/>} fill="#EF4444"/>}
+        {iterData.length > 0 && <Scatter name="Iteraciones x_i" data={iterData} shape={<CrossShape/>} fill="#EF4444"/>}
+        <Scatter name={isPuntoFijo ? 'Punto de convergencia' : 'Raíz'} data={rootPoint} shape={<RootShape/>} fill="#00E676"/>
+      </ScatterChart>
+    </ResponsiveContainer>
+  )
 }
 
-// Error convergence comparison chart
 export function ErrorChart({ histIzq, histDer, nameIzq, nameDer, tipoError }) {
-  const divRef = useRef()
-
-  useEffect(() => {
-    if (!histIzq || !histDer) return
-    let cancelled = false
-
-    async function draw() {
-      const P = await getPlotly()
-      if (cancelled) return
-
-      const errIzq = histIzq.map(r => r.error)
-      const errDer = histDer.map(r => r.error)
-
-      const traces = [
-        {
-          x: errIzq.map((_, i) => i + 1), y: errIzq,
-          mode: 'lines+markers', name: `Método A: ${nameIzq}`,
-          line: { color: '#3b82f6', width: 3 }, marker: { size: 6 }
-        },
-        {
-          x: errDer.map((_, i) => i + 1), y: errDer,
-          mode: 'lines+markers', name: `Método B: ${nameDer}`,
-          line: { color: '#8b5cf6', width: 3, dash: 'dash' }, marker: { size: 6 }
-        }
-      ]
-
-      const layout = {
-        title: { text: 'Análisis de Convergencia: Decaimiento del Error', font: { color: '#0f172a' } },
-        xaxis_title: 'Número de Iteración',
-        yaxis_title: `Error (${tipoError})`,
-        template: 'plotly_white',
-        yaxis: {
-          type: 'log', tickformat: '~g', showgrid: true,
-          gridcolor: 'rgba(200,200,200,0.2)', zeroline: true,
-          zerolinecolor: 'rgba(176,196,222,0.8)', zerolinewidth: 2.5
-        },
-        xaxis: {
-          showgrid: true, gridcolor: 'rgba(200,200,200,0.2)',
-          zeroline: true, zerolinecolor: 'rgba(176,196,222,0.8)', zerolinewidth: 2.5
-        },
-        legend: { yanchor: 'top', y: 0.99, xanchor: 'right', x: 0.99 },
-        hovermode: 'x unified', dragmode: false, margin: { l: 40, r: 40, t: 60, b: 40 },
-        paper_bgcolor: 'white', plot_bgcolor: 'white',
-      }
-
-      if (divRef.current) {
-        P.react(divRef.current, traces, layout, { displayModeBar: false, displaylogo: false })
-      }
-    }
-
-    draw()
-    return () => { cancelled = true }
-  }, [histIzq, histDer, nameIzq, nameDer])
-
-  return <div ref={divRef} style={{ width: '100%', minHeight: 340 }} />
+  if (!histIzq?.length || !histDer?.length) return null
+  const maxLen = Math.max(histIzq.length, histDer.length)
+  const data = Array.from({ length: maxLen }, (_, i) => ({
+    iter: i + 1,
+    [nameIzq]: histIzq[i]?.error ?? null,
+    [nameDer]: histDer[i]?.error ?? null,
+  }))
+  return (
+    <ResponsiveContainer width="100%" height={320}>
+      <LineChart data={data} margin={{ top: 16, right: 16, bottom: 24, left: 8 }}>
+        <CartesianGrid {...gridStyle}/>
+        <XAxis dataKey="iter" tick={axisStyle} tickLine={false} label={{ value: 'Iteración', position: 'insideBottom', offset: -12, fontSize: 11, fill: '#64748b' }}/>
+        <YAxis scale="log" domain={['auto', 'auto']} tickFormatter={v => v.toExponential(0)} tick={axisStyle} tickLine={false} width={60}/>
+        <Tooltip formatter={(v, name) => [v?.toExponential(4), name]} contentStyle={{ fontSize: 12, borderRadius: 8, border: '0.5px solid #e2e8f0' }}/>
+        <Legend wrapperStyle={{ fontSize: 12 }}/>
+        <Line dataKey={nameIzq} stroke="#3b82f6" strokeWidth={2.5} dot={{ r: 3 }} connectNulls={false} name={`Método A: ${nameIzq}`}/>
+        <Line dataKey={nameDer} stroke="#8b5cf6" strokeWidth={2.5} strokeDasharray="5 5" dot={{ r: 3 }} connectNulls={false} name={`Método B: ${nameDer}`}/>
+      </LineChart>
+    </ResponsiveContainer>
+  )
 }
 
-export function RadarChart({ nameIzq, scoresIzq, nameDer, scoresDer }) {
-  const divRef = useRef()
-
-  useEffect(() => {
-    if (!scoresIzq || !scoresDer) return
-    let cancelled = false
-
-    async function draw() {
-      const P = await getPlotly()
-      if (cancelled) return
-
-      const cats = ['VELOCIDAD', 'EFICIENCIA', 'ROBUSTEZ']
-      const traces = [
-        {
-          type: 'scatterpolar', r: [...scoresIzq, scoresIzq[0]], theta: [...cats, cats[0]],
-          fill: 'toself', name: nameIzq, line: { color: '#3b82f6', width: 3 }, marker: { size: 6 }
-        },
-        {
-          type: 'scatterpolar', r: [...scoresDer, scoresDer[0]], theta: [...cats, cats[0]],
-          fill: 'toself', name: nameDer, line: { color: '#8b5cf6', width: 3, dash: 'dash' }, marker: { size: 6 }
-        }
-      ]
-
-      const layout = {
-        title: { text: 'Desempeño Multi-Criterio', font: { size: 16, color: '#0f172a' } },
-        polar: {
-          radialaxis: { visible: true, range: [0, 10] },
-          bgcolor: 'rgba(248,250,252,0.8)'
-        },
-        paper_bgcolor: '#ffffff',
-        legend: { orientation: 'h', yanchor: 'top', y: -0.15, xanchor: 'center', x: 0.5 },
-        margin: { l: 25, r: 25, t: 50, b: 20 }, height: 350
-      }
-
-      if (divRef.current) {
-        P.react(divRef.current, traces, layout, { staticPlot: true })
-      }
-    }
-
-    draw()
-    return () => { cancelled = true }
-  }, [nameIzq, scoresIzq, nameDer, scoresDer])
-
-  return <div ref={divRef} style={{ width: '100%', minHeight: 350 }} />
+export function RadarChart2({ nameIzq, scoresIzq, nameDer, scoresDer }) {
+  const cats = ['VELOCIDAD', 'EFICIENCIA', 'ROBUSTEZ']
+  const data = cats.map((cat, i) => ({ cat, [nameIzq]: scoresIzq[i], [nameDer]: scoresDer[i] }))
+  return (
+    <ResponsiveContainer width="100%" height={320}>
+      <RadarChart data={data} margin={{ top: 16, right: 32, bottom: 16, left: 32 }}>
+        <PolarGrid stroke="rgba(200,200,200,0.4)"/>
+        <PolarAngleAxis dataKey="cat" tick={{ fontSize: 11, fill: '#0f172a' }}/>
+        <PolarRadiusAxis angle={90} domain={[0, 10]} tick={{ fontSize: 10, fill: '#64748b' }} tickCount={4}/>
+        <Radar name={nameIzq} dataKey={nameIzq} stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.25} strokeWidth={2.5}/>
+        <Radar name={nameDer} dataKey={nameDer} stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.2} strokeWidth={2.5} strokeDasharray="5 5"/>
+        <Legend wrapperStyle={{ fontSize: 12 }}/>
+        <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '0.5px solid #e2e8f0' }}/>
+      </RadarChart>
+    </ResponsiveContainer>
+  )
 }

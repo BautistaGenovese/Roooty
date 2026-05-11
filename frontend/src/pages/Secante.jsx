@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useSettings } from '../hooks/useSettings'
 import { apiPost, buildPayload } from '../utils/api'
+import Latex from '../components/Latex'
 import MethodLayout, { Expander, FormulaInput, PrecisionSlider, EmptyPanel, ResultsPanel, PdfButton } from '../components/MethodLayout'
 
 const COLS = [
@@ -39,9 +40,7 @@ export default function Secante() {
       </p>
       <br />
       <p><strong>Fórmula de iteración:</strong></p>
-      <div style={{ textAlign: 'center', fontSize: '1rem', padding: '8px', fontFamily: 'var(--font-mono)' }}>
-        x_(i+1) = x_i - f(x_i) · (x_(i-1) - x_i) / (f(x_(i-1)) - f(x_i))
-      </div>
+      <Latex tex={String.raw`x_{i+1} = x_i - f(x_i) \cdot \dfrac{x_{i-1} - x_i}{f(x_{i-1}) - f(x_i)}`} display />
       <br />
       <div className="alert alert-warning">
         ⚠️ <strong>Restricción:</strong> f(x_(i-1)) ≠ f(x_i) para evitar división por cero.

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Chart from './Chart'
 import { fetchChartData } from '../utils/api'
 import { useSettings } from '../hooks/useSettings'
@@ -131,26 +131,13 @@ export function ResultsPanel({
   const [showIters, setShowIters] = useState(true)
   const [chartData, setChartData] = useState(null)
   const { settings } = useSettings()
-  const prevF = useRef(null)
-  const prevR = useRef(null)
 
-  // Fetch chart data whenever f or range changes
-  useState(() => {
+  useEffect(() => {
     if (!f || raiz == null || isRegresion) return
-    if (f === prevF.current && raiz === prevR.current) return
-    prevF.current = f
-    prevR.current = raiz
     fetchChartData(f, xMin, xMax, settings.trigMode)
       .then(setChartData)
       .catch(console.error)
-  })
-
-  // Also re-fetch on first render
-  if (!chartData && f && raiz != null && !isRegresion) {
-    fetchChartData(f, xMin, xMax, settings.trigMode)
-      .then(setChartData)
-      .catch(console.error)
-  }
+  }, [f, raiz, xMin, xMax, isRegresion, settings.trigMode])
 
   return (
     <div>

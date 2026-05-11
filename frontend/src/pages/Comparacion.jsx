@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useSettings } from '../hooks/useSettings'
 import { apiPost, buildPayload, fetchChartData } from '../utils/api'
 import { Expander, FormulaInput, PrecisionSlider, IterTable } from '../components/MethodLayout'
-import Chart, { ErrorChart, RadarChart } from '../components/Chart'
+import Chart, { ErrorChart, RadarChart2 } from '../components/Chart'
 
 const METODOS = ['Bisección', 'Regula Falsi', 'Newton', 'Secante', 'Punto Fijo']
 

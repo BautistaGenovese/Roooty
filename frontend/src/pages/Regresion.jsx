@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { apiPost } from '../utils/api'
+import Latex from '../components/Latex'
 import MethodLayout, { Expander, EmptyPanel, PdfButton, MetricsBar, IterTable } from '../components/MethodLayout'
 import Chart from '../components/Chart'
 
@@ -46,9 +47,7 @@ export default function Regresion() {
       </p>
       <br />
       <p><strong>Ecuación resultante:</strong></p>
-      <div style={{ textAlign: 'center', fontSize: '1rem', padding: '8px', fontFamily: 'var(--font-mono)' }}>
-        f(x) = m·x + b
-      </div>
+      <Latex tex={String.raw`f(x) = mx + b`} display />
       <br />
       <div className="alert alert-info">
         💡 La raíz se obtiene despejando: x = -b / m (siempre que m ≠ 0).

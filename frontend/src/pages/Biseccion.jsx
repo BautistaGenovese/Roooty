@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useSettings } from '../hooks/useSettings'
 import { apiPost, buildPayload } from '../utils/api'
+import Latex from '../components/Latex'
 import MethodLayout, { Expander, FormulaInput, PrecisionSlider, EmptyPanel, ResultsPanel, PdfButton } from '../components/MethodLayout'
 
 const COLS = [
@@ -39,9 +40,7 @@ export default function Biseccion() {
       </p>
       <br />
       <p><strong>Fórmula de iteración (Punto medio):</strong></p>
-      <div style={{ textAlign: 'center', fontSize: '1.2rem', padding: '8px', fontFamily: 'var(--font-mono)' }}>
-        x_i = (a + b) / 2
-      </div>
+      <Latex tex={String.raw`x_i = \dfrac{a + b}{2}`} display />
       <br />
       <div className="alert alert-info">
         💡 <strong>Condición de Cambio de Signo:</strong> Obligatoriamente, f(a)·f(b) &lt; 0.

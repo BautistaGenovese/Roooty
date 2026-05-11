@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useSettings } from '../hooks/useSettings'
 import { apiPost, buildPayload } from '../utils/api'
+import Latex from '../components/Latex'
 import MethodLayout, { Expander, FormulaInput, PrecisionSlider, EmptyPanel, ResultsPanel, PdfButton } from '../components/MethodLayout'
 
 const COLS = [
@@ -39,9 +40,7 @@ export default function RegulaFalsi() {
       </p>
       <br />
       <p><strong>Fórmula de iteración:</strong></p>
-      <div style={{ textAlign: 'center', fontSize: '1rem', padding: '8px', fontFamily: 'var(--font-mono)' }}>
-        x = b - f(b)·(b - a) / (f(b) - f(a))
-      </div>
+      <Latex tex={String.raw`x = b - \dfrac{f(b) \cdot (b - a)}{f(b) - f(a)}`} display />
       <br />
       <div className="alert alert-warning">
         ⚠️ <strong>Restricción:</strong> f(a) ≠ f(b) para evitar división por cero.

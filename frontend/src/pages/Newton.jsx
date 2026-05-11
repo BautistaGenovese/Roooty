@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useSettings } from '../hooks/useSettings'
 import { apiPost, buildPayload } from '../utils/api'
+import Latex from '../components/Latex'
 import MethodLayout, { Expander, FormulaInput, PrecisionSlider, EmptyPanel, ResultsPanel, PdfButton } from '../components/MethodLayout'
 
 const COLS = [
@@ -38,9 +39,7 @@ export default function Newton() {
       </p>
       <br />
       <p><strong>Fórmula de iteración:</strong></p>
-      <div style={{ textAlign: 'center', fontSize: '1rem', padding: '8px', fontFamily: 'var(--font-mono)' }}>
-        x_(i+1) = x_i - f(x_i) / f'(x_i)
-      </div>
+      <Latex tex={String.raw`x_{i+1} = x_i - \dfrac{f(x_i)}{f'(x_i)}`} display />
       <br />
       <div className="alert alert-warning">
         ⚠️ <strong>Restricción:</strong> f'(x_i) ≠ 0, ya que la tangente horizontal nunca cruza el eje X.
