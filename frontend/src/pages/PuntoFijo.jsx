@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useSettings } from '../hooks/useSettings'
 import { apiPost, buildPayload } from '../utils/api'
 import Latex from '../components/Latex'
@@ -10,6 +11,7 @@ const COLS = [
 
 export default function PuntoFijo() {
   const { settings } = useSettings()
+  const [searchParams] = useSearchParams()
   const [mode, setMode] = useState('manual') // 'manual' | 'auto'
   const [g, setG] = useState('')
   const [fAuto, setFAuto] = useState('')
@@ -18,6 +20,13 @@ export default function PuntoFijo() {
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const pg = searchParams.get('g')
+    const px0 = searchParams.get('x0')
+    if (pg) { setMode('manual'); setG(pg) }
+    if (px0 !== null) setX0(parseFloat(px0))
+  }, [])
 
   const formula = mode === 'manual' ? g : `x - (${fAuto})`
 
@@ -36,7 +45,7 @@ export default function PuntoFijo() {
   const teoria = (
     <Expander title="📖 ¿Cómo funciona el método de Punto Fijo?">
       <p>
-        <strong>Concepto básico:</strong> Transforma f(x) = 0 en x = g(x). Se toma un valor inicial, se evalúa en g(x),
+        <strong>Concepto básico:</strong> Transforma <Latex tex="f(x) = 0" /> en <Latex tex="x = g(x)" />. Se toma un valor inicial, se evalúa en <Latex tex="g(x)" />,
         y el resultado se convierte en la entrada para la siguiente iteración.
       </p>
       <br />
@@ -44,7 +53,7 @@ export default function PuntoFijo() {
       <Latex tex={String.raw`x_{i+1} = g(x_i)`} display />
       <br />
       <div className="alert alert-info">
-        💡 <strong>Criterio de Convergencia:</strong> |g'(x)| &lt; 1 cerca de la raíz.
+        💡 <strong>Criterio de Convergencia:</strong> <Latex tex="|g'(x)| < 1" /> cerca de la raíz.
       </div>
     </Expander>
   )
@@ -85,7 +94,7 @@ export default function PuntoFijo() {
       </div>
       <PrecisionSlider value={prec} onChange={setPrec} />
       {error && <div className="alert alert-error">{error}</div>}
-      {result && <><hr className="divider" /><PdfButton /></>}
+      {result && <PdfButton title="Punto Fijo" f={formula} params={{ 'x0': x0, 'Tolerancia': `1e-${prec}` }} result={result} columns={COLS} />}
     </>
   )
 

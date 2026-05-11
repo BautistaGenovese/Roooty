@@ -69,6 +69,11 @@ export default function Settings() {
           <h3>🛠️ Configuración Global</h3>
           <hr className="divider" />
 
+          <p style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: 8 }}>🎨 Apariencia</p>
+          <Toggle label="Modo Oscuro" value={settings.darkMode} onChange={v => update('darkMode', v)} />
+
+          <hr className="divider" />
+
           <p style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: 8 }}>🧮 Motor Matemático</p>
           <div className="form-group">
             <label className="form-label">Trigonometría</label>

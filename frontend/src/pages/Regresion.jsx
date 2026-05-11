@@ -50,7 +50,7 @@ export default function Regresion() {
       <Latex tex={String.raw`f(x) = mx + b`} display />
       <br />
       <div className="alert alert-info">
-        💡 La raíz se obtiene despejando: x = -b / m (siempre que m ≠ 0).
+        💡 La raíz se obtiene despejando: <Latex tex="x = -\dfrac{b}{m}" /> (siempre que <Latex tex="m \neq 0" />).
       </div>
     </Expander>
   )
@@ -100,7 +100,7 @@ export default function Regresion() {
         </button>
       </div>
       {error && <div className="alert alert-error">{error}</div>}
-      {result && <><hr className="divider" /><PdfButton /></>}
+      {result && <PdfButton title="Regresión Lineal" params={{ 'Puntos ingresados': result.xv?.length || 0, 'Pendiente (m)': result.m?.toFixed(4), 'Ordenada (b)': result.b?.toFixed(4), 'R²': result.r2?.toFixed(4) }} result={result} />}
     </>
   )
 
@@ -109,9 +109,9 @@ export default function Regresion() {
       <div style={{ textAlign: 'center', marginBottom: 8 }}>
         <span style={{ fontSize: '0.78rem', color: 'var(--slate)', fontWeight: 700, letterSpacing: 1 }}>FUNCIÓN APROXIMADA</span>
         <br />
-        <code style={{ fontFamily: 'var(--font-mono)', fontSize: '1rem', color: 'var(--navy)', fontWeight: 700 }}>
-          f(x) = {result.m.toFixed(4)}·x + {result.b.toFixed(4)}
-        </code>
+        <div style={{ color: 'var(--navy)' }}>
+          <Latex tex={`${result.m.toFixed(4)}x + ${result.b >= 0 ? result.b.toFixed(4) : `(${result.b.toFixed(4)})`}`} display />
+        </div>
       </div>
 
       <div className="metrics-bar">

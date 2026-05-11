@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useSettings } from '../hooks/useSettings'
 import { apiPost, buildPayload } from '../utils/api'
 import Latex from '../components/Latex'
@@ -12,12 +13,20 @@ const COLS = [
 
 export default function Newton() {
   const { settings } = useSettings()
+  const [searchParams] = useSearchParams()
   const [f, setF] = useState('')
   const [x0, setX0] = useState(-10)
   const [prec, setPrec] = useState(2)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const pf = searchParams.get('f')
+    const px0 = searchParams.get('x0')
+    if (pf) setF(pf)
+    if (px0 !== null) setX0(parseFloat(px0))
+  }, [])
 
   async function calcular() {
     if (!f.trim()) { setError('Ingresa una función.'); return }
@@ -34,15 +43,15 @@ export default function Newton() {
   const teoria = (
     <Expander title="📖 ¿Cómo funciona el método de Newton-Raphson?">
       <p>
-        <strong>Concepto básico:</strong> Comienza en un punto inicial x₀ y traza una línea <strong>tangente</strong> a la curva usando la derivada.
-        La intersección de esa tangente con el eje X da el siguiente punto x₁.
+        <strong>Concepto básico:</strong> Comienza en un punto inicial <Latex tex="x_0" /> y traza una línea <strong>tangente</strong> a la curva usando la derivada.
+        La intersección de esa tangente con el eje X da el siguiente punto <Latex tex="x_1" />.
       </p>
       <br />
       <p><strong>Fórmula de iteración:</strong></p>
       <Latex tex={String.raw`x_{i+1} = x_i - \dfrac{f(x_i)}{f'(x_i)}`} display />
       <br />
       <div className="alert alert-warning">
-        ⚠️ <strong>Restricción:</strong> f'(x_i) ≠ 0, ya que la tangente horizontal nunca cruza el eje X.
+        ⚠️ <strong>Restricción:</strong> <Latex tex="f'(x_i) \neq 0" />, ya que la tangente horizontal nunca cruza el eje X.
       </div>
     </Expander>
   )
@@ -56,7 +65,7 @@ export default function Newton() {
       </div>
       <PrecisionSlider value={prec} onChange={setPrec} />
       {error && <div className="alert alert-error">{error}</div>}
-      {result && <><hr className="divider" /><PdfButton /></>}
+      {result && <PdfButton title="Newton-Raphson" f={f} params={{ 'x0': x0, 'Tolerancia': `1e-${prec}` }} result={result} columns={COLS} />}
     </>
   )
 

@@ -277,7 +277,7 @@ export default function Comparacion() {
               </div>
             </div>
             <div className="card">
-              <RadarChart
+              <RadarChart2
                 nameIzq={metA}
                 scoresIzq={[sVelA, sCostA, ROB[metA] ?? 5]}
                 nameDer={metB}

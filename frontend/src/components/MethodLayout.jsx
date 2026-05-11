@@ -2,8 +2,24 @@ import { useState, useRef, useEffect } from 'react'
 import Chart from './Chart'
 import { fetchChartData } from '../utils/api'
 import { useSettings } from '../hooks/useSettings'
+import { jsPDF } from 'jspdf'
+import autoTable from 'jspdf-autotable'
+import html2canvas from 'html2canvas'
+import Latex from './Latex'
 
-// ─── EXPANDER ─────────────────────────────────────────────────────────────────
+export function formatMathToLatex(f) {
+  if (!f) return '';
+  let tex = f;
+  tex = tex.replace(/\*\*/g, '^');
+  tex = tex.replace(/\*/g, ' \\cdot ');
+  const funcs = ['sin', 'cos', 'tan', 'exp', 'log', 'ln', 'sqrt'];
+  funcs.forEach(fn => {
+    const regex = new RegExp(`\\b${fn}\\b`, 'g');
+    tex = tex.replace(regex, `\\${fn}`);
+  });
+  return tex;
+}
+
 export function Expander({ title, children }) {
   const [open, setOpen] = useState(false)
   return (
@@ -12,7 +28,9 @@ export function Expander({ title, children }) {
         <span>{title}</span>
         <span className={`expander-arrow ${open ? 'open' : ''}`}>▼</span>
       </div>
-      {open && <div className="expander-body">{children}</div>}
+      <div className={`expander-body-wrapper ${open ? 'open' : ''}`} style={{ display: open ? 'block' : 'none' }}>
+        <div className="expander-body">{children}</div>
+      </div>
     </div>
   )
 }
@@ -112,11 +130,98 @@ export function MetricsBar({ raiz, iters }) {
 }
 
 // ─── PDF BUTTON ───────────────────────────────────────────────────────────────
-export function PdfButton() {
+export function PdfButton({ title, f, params, result, columns }) {
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const handleGenerate = async () => {
+    setIsGenerating(true);
+    try {
+      const doc = new jsPDF({ format: 'letter' });
+      const pw = doc.internal.pageSize.getWidth();
+      
+      // Title
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(18);
+      doc.setTextColor(59, 130, 246); // var(--blue)
+      doc.text(`Reporte de Análisis Numérico - Rooty`, pw / 2, 20, { align: 'center' });
+
+      // Divider
+      doc.setDrawColor(226, 232, 240); // var(--border)
+      doc.setLineWidth(0.5);
+      doc.line(14, 25, pw - 14, 25);
+
+      // Info text
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(30, 41, 59); // navy-dark
+      
+      let y = 35;
+      if (title && f) {
+        doc.text(`Método de ${title}: f(x) = ${f}`, 14, y);
+        y += 8;
+      }
+      
+      if (params) {
+        const paramStr = Object.entries(params).map(([k,v]) => `${k}: ${v}`).join(', ');
+        doc.text(`Parámetros: ${paramStr}`, 14, y);
+        y += 8;
+      }
+
+      if (result && result.raiz !== undefined && result.raiz !== null) {
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 230, 118); // var(--success)
+        doc.text(`Raíz encontrada: x = ${Number(result.raiz).toFixed(6)}`, 14, y);
+        y += 15;
+      } else {
+        y += 7;
+      }
+
+      // Chart
+      const chartEl = document.getElementById('chart-pdf-container');
+      if (chartEl) {
+        const canvas = await html2canvas(chartEl, { scale: 2 });
+        const imgData = canvas.toDataURL('image/png');
+        const imgProps = doc.getImageProperties(imgData);
+        const pdfWidth = pw - 28;
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        doc.addImage(imgData, 'PNG', 14, y, pdfWidth, pdfHeight);
+        y += pdfHeight + 10;
+      }
+
+      // Table
+      if (result && result.iteraciones && columns) {
+        const head = [ ['Iter', ...columns.map(c => c.label)] ];
+        const body = result.iteraciones.map((row, i) => [
+          i,
+          ...columns.map(c => row[c.key] != null ? (typeof row[c.key] === 'number' ? row[c.key].toFixed(6) : row[c.key]) : '—')
+        ]);
+
+        autoTable(doc, {
+          startY: y,
+          head: head,
+          body: body,
+          theme: 'grid',
+          headStyles: { fillColor: [59, 130, 246], textColor: 255, halign: 'center' },
+          bodyStyles: { halign: 'center' },
+          alternateRowStyles: { fillColor: [248, 250, 252] },
+          margin: { left: 14, right: 14 }
+        });
+      }
+
+      doc.save(`Reporte_${title || 'Metodo'}.pdf`);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsGenerating(false);
+    }
+  }
+
   return (
-    <button className="btn btn-secondary" style={{ marginTop: 8 }} onClick={() => alert('Función PDF disponible próximamente.')}>
-      📝 Generar reporte en PDF
-    </button>
+    <div style={{ marginTop: '1rem' }}>
+      <button className="btn btn-secondary" onClick={handleGenerate} disabled={isGenerating}>
+        {isGenerating ? '⏳ Generando reporte...' : '📝 Generar reporte en PDF'}
+      </button>
+    </div>
   )
 }
 
@@ -145,27 +250,33 @@ export function ResultsPanel({
         <span style={{ fontSize: '0.78rem', color: 'var(--slate)', fontWeight: 700, letterSpacing: 1, display: 'block', marginBottom: 4 }}>
           FUNCIÓN EVALUADA
         </span>
-        <code style={{ fontFamily: 'var(--font-mono)', fontSize: '1rem', color: 'var(--navy)', fontWeight: 700 }}>
-          {isRegresion ? 'Regresión Lineal' : `f(x) = ${f}`}
-        </code>
+        <div style={{ color: 'var(--navy)' }}>
+          {isRegresion ? (
+            <code style={{ fontFamily: 'var(--font-mono)', fontSize: '1rem', fontWeight: 700 }}>Regresión Lineal</code>
+          ) : (
+            <Latex tex={formatMathToLatex(f)} display />
+          )}
+        </div>
       </div>
 
       {extraMetrics || <MetricsBar raiz={raiz} iters={iteraciones?.length ?? 0} />}
 
       <div style={{ marginTop: 12 }}>
-        <Chart
-          f={isRegresion ? regresionChart : chartData}
-          raiz={raiz}
-          xMin={xMin} xMax={xMax}
-          iteraciones={isRegresion ? regresionData : (showIters ? iteraciones : null)}
-          chartKey={chartKey}
-          isPuntoFijo={isPuntoFijo}
-          isRegresion={isRegresion}
-        />
+        <div id="chart-pdf-container" style={{ padding: '10px' }}>
+          <Chart
+            f={isRegresion ? regresionChart : chartData}
+            raiz={raiz}
+            xMin={xMin} xMax={xMax}
+            iteraciones={isRegresion ? regresionData : (showIters ? iteraciones : null)}
+            chartKey={chartKey}
+            isPuntoFijo={isPuntoFijo}
+            isRegresion={isRegresion}
+          />
+        </div>
       </div>
 
       {showToggle && !isRegresion && (
-        <div className="toggle-wrap" style={{ marginTop: 8 }} onClick={() => setShowIters(s => !s)}>
+        <div className="toggle-wrap no-pdf" style={{ marginTop: '1rem', marginBottom: '1rem' }} onClick={() => setShowIters(s => !s)}>
           <div className={`toggle-switch ${showIters ? 'on' : ''}`}>
             <div className="toggle-knob" />
           </div>
@@ -185,12 +296,14 @@ export function ResultsPanel({
 // ─── METHOD PAGE LAYOUT ───────────────────────────────────────────────────────
 export default function MethodLayout({ title, badge, teoria, inputs, onCalcular, result, codeSnippet }) {
   return (
-    <div>
+    <div id="pdf-content" className="page-content-wrap">
       <h1 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--navy)', marginBottom: '1rem' }}>
         Método {title}
       </h1>
 
-      {teoria}
+      <div className="no-pdf">
+        {teoria}
+      </div>
 
       <div className="two-col">
         {/* LEFT — INPUTS */}
@@ -200,11 +313,15 @@ export default function MethodLayout({ title, badge, teoria, inputs, onCalcular,
             <span className="badge">{badge}</span>
           </div>
 
-          {inputs}
+          <div>
+            {inputs}
+          </div>
 
-          <button className="btn btn-primary" onClick={onCalcular}>
-            🚀 Calcular y Graficar
-          </button>
+          <div style={{ marginTop: '1rem' }}>
+            <button className="btn btn-primary no-pdf" onClick={onCalcular}>
+              🚀 Calcular y Graficar
+            </button>
+          </div>
         </div>
 
         {/* RIGHT — RESULTS */}
@@ -214,11 +331,10 @@ export default function MethodLayout({ title, badge, teoria, inputs, onCalcular,
       </div>
 
       {codeSnippet && (
-        <div style={{ marginTop: '2rem' }}>
-          <hr className="divider" />
-          <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--navy)', marginBottom: '1rem' }}>
-            Código en Python
-          </h2>
+        <div className="no-pdf card" style={{ marginTop: '2rem' }}>
+          <div className="card-header" style={{ marginBottom: '1rem' }}>
+            <h4 style={{ fontSize: '1.2rem' }}>Código en Python</h4>
+          </div>
           {codeSnippet}
         </div>
       )}

@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useSettings } from '../hooks/useSettings'
 import { apiPost, buildPayload } from '../utils/api'
 import Latex from '../components/Latex'
@@ -12,6 +13,7 @@ const COLS = [
 
 export default function RegulaFalsi() {
   const { settings } = useSettings()
+  const [searchParams] = useSearchParams()
   const [f, setF] = useState('')
   const [a, setA] = useState(-10)
   const [b, setB] = useState(10)
@@ -19,6 +21,15 @@ export default function RegulaFalsi() {
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const pf = searchParams.get('f')
+    const pa = searchParams.get('a')
+    const pb = searchParams.get('b')
+    if (pf) setF(pf)
+    if (pa !== null) setA(parseFloat(pa))
+    if (pb !== null) setB(parseFloat(pb))
+  }, [])
 
   async function calcular() {
     if (!f.trim()) { setError('Ingresa una función.'); return }
@@ -36,14 +47,14 @@ export default function RegulaFalsi() {
     <Expander title="📖 ¿Cómo funciona el método de Regula Falsi (Falsa Posición)?">
       <p>
         <strong>Concepto básico:</strong> Combina la seguridad de la Bisección con una aproximación más inteligente.
-        Traza una línea recta entre (a, f(a)) y (b, f(b)), y la intersección con el eje X es la nueva aproximación.
+        Traza una línea recta entre <Latex tex="(a, f(a))" /> y <Latex tex="(b, f(b))" />, y la intersección con el eje X es la nueva aproximación.
       </p>
       <br />
       <p><strong>Fórmula de iteración:</strong></p>
       <Latex tex={String.raw`x = b - \dfrac{f(b) \cdot (b - a)}{f(b) - f(a)}`} display />
       <br />
       <div className="alert alert-warning">
-        ⚠️ <strong>Restricción:</strong> f(a) ≠ f(b) para evitar división por cero.
+        ⚠️ <strong>Restricción:</strong> <Latex tex="f(a) \neq f(b)" /> para evitar división por cero.
       </div>
     </Expander>
   )
@@ -63,7 +74,7 @@ export default function RegulaFalsi() {
       </div>
       <PrecisionSlider value={prec} onChange={setPrec} />
       {error && <div className="alert alert-error">{error}</div>}
-      {result && <><hr className="divider" /><PdfButton /></>}
+      {result && <PdfButton title="Regula Falsi" f={f} params={{ 'Límite a': a, 'Límite b': b, 'Tolerancia': `1e-${prec}` }} result={result} columns={COLS} />}
     </>
   )
 

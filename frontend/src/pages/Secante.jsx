@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useSettings } from '../hooks/useSettings'
 import { apiPost, buildPayload } from '../utils/api'
 import Latex from '../components/Latex'
@@ -12,6 +13,7 @@ const COLS = [
 
 export default function Secante() {
   const { settings } = useSettings()
+  const [searchParams] = useSearchParams()
   const [f, setF] = useState('')
   const [xn, setXn] = useState(-10)
   const [xn1, setXn1] = useState(10)
@@ -19,6 +21,15 @@ export default function Secante() {
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const pf = searchParams.get('f')
+    const pxn = searchParams.get('xn')
+    const pxn1 = searchParams.get('xn1')
+    if (pf) setF(pf)
+    if (pxn !== null) setXn(parseFloat(pxn))
+    if (pxn1 !== null) setXn1(parseFloat(pxn1))
+  }, [])
 
   async function calcular() {
     if (!f.trim()) { setError('Ingresa una función.'); return }
@@ -43,7 +54,7 @@ export default function Secante() {
       <Latex tex={String.raw`x_{i+1} = x_i - f(x_i) \cdot \dfrac{x_{i-1} - x_i}{f(x_{i-1}) - f(x_i)}`} display />
       <br />
       <div className="alert alert-warning">
-        ⚠️ <strong>Restricción:</strong> f(x_(i-1)) ≠ f(x_i) para evitar división por cero.
+        ⚠️ <strong>Restricción:</strong> <Latex tex="f(x_{i-1}) \neq f(x_i)" /> para evitar división por cero.
       </div>
     </Expander>
   )
@@ -63,7 +74,7 @@ export default function Secante() {
       </div>
       <PrecisionSlider value={prec} onChange={setPrec} />
       {error && <div className="alert alert-error">{error}</div>}
-      {result && <><hr className="divider" /><PdfButton /></>}
+      {result && <PdfButton title="Secante" f={f} params={{ 'xₙ': xn, 'xₙ₊₁': xn1, 'Tolerancia': `1e-${prec}` }} result={result} columns={COLS} />}
     </>
   )
 

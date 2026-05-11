@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useSettings } from '../hooks/useSettings'
 import { apiPost, buildPayload } from '../utils/api'
 import Latex from '../components/Latex'
@@ -12,6 +13,7 @@ const COLS = [
 
 export default function Biseccion() {
   const { settings } = useSettings()
+  const [searchParams] = useSearchParams()
   const [f, setF] = useState('')
   const [a, setA] = useState(-10)
   const [b, setB] = useState(10)
@@ -19,6 +21,15 @@ export default function Biseccion() {
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const pf = searchParams.get('f')
+    const pa = searchParams.get('a')
+    const pb = searchParams.get('b')
+    if (pf) setF(pf)
+    if (pa !== null) setA(parseFloat(pa))
+    if (pb !== null) setB(parseFloat(pb))
+  }, [])
 
   async function calcular() {
     if (!f.trim()) { setError('Ingresa una función.'); return }
@@ -43,7 +54,7 @@ export default function Biseccion() {
       <Latex tex={String.raw`x_i = \dfrac{a + b}{2}`} display />
       <br />
       <div className="alert alert-info">
-        💡 <strong>Condición de Cambio de Signo:</strong> Obligatoriamente, f(a)·f(b) &lt; 0.
+        💡 <strong>Condición de Cambio de Signo:</strong> Obligatoriamente, <Latex tex="f(a) \cdot f(b) < 0" />.
       </div>
     </Expander>
   )
@@ -63,12 +74,7 @@ export default function Biseccion() {
       </div>
       <PrecisionSlider value={prec} onChange={setPrec} />
       {error && <div className="alert alert-error">{error}</div>}
-      {result && (
-        <>
-          <hr className="divider" />
-          <PdfButton />
-        </>
-      )}
+      {result && <PdfButton title="Bisección" f={f} params={{ 'Límite a': a, 'Límite b': b, 'Tolerancia': `1e-${prec}` }} result={result} columns={COLS} />}
     </>
   )
 

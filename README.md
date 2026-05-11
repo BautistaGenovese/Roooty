@@ -40,6 +40,46 @@ http://localhost
 
 ---
 
+## 🛠️ Desarrollo en tiempo real (Hot-Reloading)
+
+Si querés modificar el código y ver los cambios al instante sin reconstruir Docker, tenés dos opciones:
+
+### Opción 1: Localmente (Recomendado y más rápido)
+Necesitás tener [Python](https://www.python.org/downloads/) y [Node.js](https://nodejs.org/es/) instalados.
+
+**1. Levantar el Backend:**
+Abre una terminal y ejecuta:
+```powershell
+cd backend
+# Crear y activar entorno virtual (solo la primera vez)
+python -m venv venv
+.\venv\Scripts\activate
+# Instalar dependencias (solo la primera vez)
+pip install -r requirements.txt
+# Correr el servidor
+uvicorn main:app --reload
+```
+
+**2. Levantar el Frontend:**
+Abre **otra** terminal y ejecuta:
+```powershell
+cd frontend
+npm install # (solo la primera vez)
+npm run dev
+```
+Luego abrí **`http://localhost:5173`** en tu navegador.
+
+### Opción 2: Usando Docker (Entorno Dev)
+Si preferís no instalar nada en tu computadora:
+
+```powershell
+# Levantar usando el archivo de desarrollo
+docker compose -f docker-compose.dev.yml up
+```
+Luego abrí **`http://localhost:5173`** en tu navegador.
+
+---
+
 ## 🛑 Comandos útiles
 
 ```powershell

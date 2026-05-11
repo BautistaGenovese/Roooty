@@ -1,107 +1,289 @@
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import {
-  ScatterChart, Scatter, XAxis, YAxis, CartesianGrid,
-  Tooltip, Legend, ResponsiveContainer, LineChart, Line,
-  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
-} from 'recharts'
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
+  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis
+} from 'recharts';
 
+// --- FUNCIONES AUXILIARES ORIGINALES ---
 function zipXY(xs, ys) {
-  if (!xs || !ys) return []
-  return xs.map((x, i) => ({ x, y: ys[i] })).filter(d => d.y != null && isFinite(d.y))
+  if (!xs || !ys) return [];
+  return xs.map((x, i) => ({ x, y: ys[i] })).filter(d => d.y != null && isFinite(d.y));
 }
 
-function yBounds(data) {
-  const vals = data.map(d => Math.abs(d.y)).filter(isFinite)
-  const mx = Math.max(...vals, 1)
-  return [-mx * 1.25, mx * 1.25]
-}
-
-const CrossShape = ({ cx, cy }) => {
-  const s = 6
-  return <path d={`M${cx-s},${cy-s}L${cx+s},${cy+s}M${cx+s},${cy-s}L${cx-s},${cy+s}`} stroke="#EF4444" strokeWidth={2.2} fill="none"/>
-}
-
-const RootShape = ({ cx, cy }) => (
-  <circle cx={cx} cy={cy} r={7} fill="#00E676" stroke="white" strokeWidth={2}/>
-)
-
-const fmt6 = v => typeof v === 'number' ? v.toFixed(6) : v
 const fmtAxis = v => {
-  if (Math.abs(v) >= 1000 || (Math.abs(v) < 0.01 && v !== 0)) return v.toExponential(1)
-  return parseFloat(v.toFixed(3)).toString()
-}
-const gridStyle = { stroke: 'rgba(200,200,200,0.25)', strokeDasharray: '3 3' }
-const axisStyle = { fontSize: 11, fill: '#64748b' }
+  if (Math.abs(v) >= 1000 || (Math.abs(v) < 0.01 && v !== 0)) return v.toExponential(1);
+  return parseFloat(v.toFixed(3)).toString();
+};
 
-export default function Chart({ f, raiz, xMin, xMax, iteraciones, chartKey, isPuntoFijo = false, isRegresion = false }) {
-  if (!f || raiz == null) return null
-  const funcData = zipXY(f.x, f.y)
-  if (funcData.length === 0) return null
+const gridStyle = { stroke: 'rgba(200,200,200,0.25)', strokeDasharray: '3 3' };
+const axisStyle = { fontSize: 11, fill: '#64748b' };
 
-  const [yMin, yMax] = yBounds(funcData)
-  const xL = funcData[0]?.x ?? xMin
-  const xR = funcData[funcData.length - 1]?.x ?? xMax
-  const yxData = isPuntoFijo ? funcData.map(d => ({ x: d.x, y: d.x })) : []
-  const iterData = iteraciones && iteraciones.length > 0
-    ? iteraciones.slice(0, -1).map(r => ({ x: r.x, y: isPuntoFijo ? r.x : 0 }))
-    : []
-  const regPoints = isRegresion && iteraciones?.puntos ? iteraciones.puntos.map(p => ({ x: p.x, y: p.y })) : []
-  const rootPoint = [{ x: raiz, y: isPuntoFijo ? raiz : 0 }]
+// --- GRÁFICO PRINCIPAL (SVG NATIVO) ---
+
+// Paleta de colores elegante con soporte a Dark Mode nativo
+const C = {
+  teal: "var(--blue)",
+  dark: "var(--navy-dark)",
+  surface: "var(--bg)",
+  border: "var(--border)",
+  muted: "var(--slate)",
+  root: "var(--success)",
+  iter: "var(--error)"
+};
+
+export default function Chart({ f, raiz, xMin, xMax, iteraciones, isPuntoFijo = false, isRegresion = false }) {
+  const [containerEl, setContainerEl] = useState(null);
+  const [dimensions, setDimensions] = useState({ W: 800 });
+  const [isRootHovered, setIsRootHovered] = useState(false);
+  const [hovered, setHovered] = useState(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    if (!containerEl) return;
+    const observer = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        if (entry.contentRect.width > 0) {
+          setDimensions({ W: entry.contentRect.width });
+        }
+      }
+    });
+    observer.observe(containerEl);
+    return () => observer.disconnect();
+  }, [containerEl]);
+
+  const points = useMemo(() => zipXY(f?.x, f?.y), [f]);
+
+  const { valid, xMinCalc, xMaxCalc, yMin, yMax, xRange, yRange } = useMemo(() => {
+    if (points.length < 2) return { valid: [], xMinCalc: 0, xMaxCalc: 1, yMin: 0, yMax: 1, xRange: 1, yRange: 1 };
+    const xs = points.map(p => p.x);
+    const ys = points.map(p => Math.abs(p.y)).filter(isFinite);
+    const mxY = Math.max(...ys, 1) * 1.25;
+
+    const xL = xs[0] ?? xMin;
+    const xR = xs[xs.length - 1] ?? xMax;
+
+    return {
+      valid: points,
+      xMinCalc: xL,
+      xMaxCalc: xR,
+      yMin: -mxY,
+      yMax: mxY,
+      xRange: (xR - xL) || 1,
+      yRange: (mxY - (-mxY)) || 1,
+    };
+  }, [points, xMin, xMax]);
+
+  const { W } = dimensions;
+  const H = Math.max(250, W * (7 / 16));
+  const pad = { t: 20, r: 20, b: 35, l: W < 500 ? 40 : 65 };
+  const innerW = W - pad.l - pad.r;
+  const innerH = H - pad.t - pad.b;
+
+  const cx = useCallback((x) => pad.l + ((x - xMinCalc) / xRange) * innerW, [xMinCalc, xRange, pad.l, innerW]);
+  const cy = useCallback((y) => pad.t + innerH - ((y - yMin) / yRange) * innerH, [yMin, yRange, pad.t, innerH]);
+
+  const curveD = useMemo(() =>
+    valid.map((p, i) => `${i === 0 ? "M" : "L"}${cx(p.x).toFixed(1)},${cy(p.y).toFixed(1)}`).join(" "),
+    [valid, cx, cy]);
+
+  const zeroY = cy(0);
+  const rootX = raiz != null && Number.isFinite(raiz) ? cx(raiz) : null;
+
+  const handleMouseMove = useCallback((e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const scaleX = W / rect.width;
+    const scaleY = H / rect.height;
+    const svgX = (e.clientX - rect.left) * scaleX;
+    const svgY = (e.clientY - rect.top) * scaleY;
+
+    if (svgX < pad.l || svgX > W - pad.r) {
+      setHovered(null);
+      setIsRootHovered(false);
+      return;
+    }
+
+    if (rootX != null && zeroY != null) {
+      const dist = Math.sqrt(Math.pow(svgX - rootX, 2) + Math.pow(svgY - zeroY, 2));
+      if (dist < 20) {
+        setIsRootHovered(true);
+        setHovered(null);
+        setMousePos({ x: svgX, y: svgY });
+        return;
+      }
+    }
+
+    setIsRootHovered(false);
+    const xVal = xMinCalc + ((svgX - pad.l) / innerW) * xRange;
+    let nearest = valid[0];
+    let minDist = Infinity;
+    for (const p of valid) {
+      const dist = Math.abs(p.x - xVal);
+      if (dist < minDist) { minDist = dist; nearest = p; }
+    }
+    setHovered(nearest);
+    setMousePos({ x: svgX, y: svgY });
+  }, [valid, xMinCalc, xRange, W, H, innerW, pad.l, pad.r, rootX, zeroY]);
+
+  // Generar ticks para los ejes
+  const xTicks = useMemo(() => {
+    if (xRange === 0) return [];
+    const ticks = [];
+    const steps = 6;
+    for (let i = 0; i <= steps; i++) {
+      ticks.push(xMinCalc + (i * xRange) / steps);
+    }
+    return ticks;
+  }, [xMinCalc, xRange]);
+
+  const yTicks = useMemo(() => {
+    if (yRange === 0) return [];
+    const ticks = [];
+    const steps = 4;
+    for (let i = 0; i <= steps; i++) {
+      ticks.push(yMin + (i * yRange) / steps);
+    }
+    return ticks;
+  }, [yMin, yRange]);
+
+  if (valid.length < 2) return null;
 
   return (
-    <ResponsiveContainer width="100%" height={360}>
-      <ScatterChart margin={{ top: 16, right: 16, bottom: 8, left: 8 }}>
-        <CartesianGrid {...gridStyle}/>
-        <XAxis type="number" dataKey="x" domain={[xL, xR]} tickFormatter={fmtAxis} tick={axisStyle} tickLine={false}/>
-        <YAxis type="number" dataKey="y" domain={[yMin, yMax]} tickFormatter={fmtAxis} tick={axisStyle} tickLine={false} width={60}/>
-        <Tooltip cursor={{ strokeDasharray: '3 3' }} formatter={(v) => [fmt6(v), '']} contentStyle={{ fontSize: 12, borderRadius: 8, border: '0.5px solid #e2e8f0' }}/>
-        <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }}/>
-        <Scatter name={isPuntoFijo ? 'g(x)' : 'f(x)'} data={funcData} line={{ stroke: '#3b82f6', strokeWidth: 2.5 }} shape={() => null} legendType="line" fill="#3b82f6"/>
-        {isPuntoFijo && <Scatter name="y = x" data={yxData} line={{ stroke: '#FFCA28', strokeWidth: 2, strokeDasharray: '5 5' }} shape={() => null} legendType="line" fill="#FFCA28"/>}
-        {isRegresion && regPoints.length > 0 && <Scatter name="Valores" data={regPoints} shape={<CrossShape/>} fill="#EF4444"/>}
-        {iterData.length > 0 && <Scatter name="Iteraciones x_i" data={iterData} shape={<CrossShape/>} fill="#EF4444"/>}
-        <Scatter name={isPuntoFijo ? 'Punto de convergencia' : 'Raíz'} data={rootPoint} shape={<RootShape/>} fill="#00E676"/>
-      </ScatterChart>
-    </ResponsiveContainer>
-  )
+    <div ref={setContainerEl} style={{ position: "relative", width: "100%", height: H, userSelect: "none" }}>
+      <svg
+        width="100%" height="100%" viewBox={`0 0 ${W} ${H}`}
+        style={{ overflow: "visible", cursor: isRootHovered ? "pointer" : "crosshair" }}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={() => { setHovered(null); setIsRootHovered(false); }}
+      >
+
+        {/* Ticks y Grid Y */}
+        {yTicks.map((val, i) => (
+          <g key={`y-${i}`}>
+            <line x1={pad.l} y1={cy(val)} x2={W - pad.r} y2={cy(val)} stroke={C.border} strokeWidth={1} strokeDasharray="4,4" opacity={0.6} />
+            <text x={pad.l - 10} y={cy(val)} textAnchor="end" dominantBaseline="middle" fontSize={11} fill={C.muted}>
+              {fmtAxis(val)}
+            </text>
+          </g>
+        ))}
+
+        {/* Ticks y Grid X */}
+        {xTicks.map((val, i) => (
+          <g key={`x-${i}`}>
+            <line x1={cx(val)} y1={pad.t} x2={cx(val)} y2={H - pad.b} stroke={C.border} strokeWidth={1} strokeDasharray="4,4" opacity={0.6} />
+            <text x={cx(val)} y={H - pad.b + 18} textAnchor="middle" fontSize={11} fill={C.muted}>
+              {fmtAxis(val)}
+            </text>
+          </g>
+        ))}
+
+        {/* Ejes X e Y Centrales */}
+        {zeroY >= pad.t && zeroY <= H - pad.b && (
+          <line x1={pad.l} y1={zeroY} x2={W - pad.r} y2={zeroY} stroke={C.muted} strokeWidth={1.5} opacity={0.8} />
+        )}
+        {cx(0) >= pad.l && cx(0) <= W - pad.r && (
+          <line x1={cx(0)} y1={pad.t} x2={cx(0)} y2={H - pad.b} stroke={C.muted} strokeWidth={1.5} opacity={0.8} />
+        )}
+
+        {/* Línea y = x para Punto Fijo */}
+        {isPuntoFijo && Math.max(xMinCalc, yMin) <= Math.min(xMaxCalc, yMax) && (
+          <line 
+            x1={cx(Math.max(xMinCalc, yMin))} 
+            y1={cy(Math.max(xMinCalc, yMin))} 
+            x2={cx(Math.min(xMaxCalc, yMax))} 
+            y2={cy(Math.min(xMaxCalc, yMax))} 
+            stroke={C.muted} strokeWidth={1.5} strokeDasharray="5,5" opacity={0.5} 
+          />
+        )}
+
+        {/* Curva de la función */}
+        <path d={curveD} fill="none" stroke={C.teal} strokeWidth={2.5} strokeLinejoin="round" />
+
+        {/* Punto de Raíz */}
+        {rootX && (
+          <g>
+            <line x1={rootX} y1={pad.t} x2={rootX} y2={H - pad.b} stroke={C.root} strokeWidth={1.5} strokeDasharray="5,3" opacity={0.8} />
+            <circle cx={rootX} cy={zeroY} r={6} fill={C.root} stroke="white" strokeWidth={2} />
+          </g>
+        )}
+
+        {/* Indicador de Hover sobre curva general */}
+        {hovered && (
+          <>
+            <line x1={cx(hovered.x)} y1={pad.t} x2={cx(hovered.x)} y2={H - pad.b} stroke={C.muted} strokeWidth={1} strokeDasharray="4,4" />
+            <circle cx={cx(hovered.x)} cy={cy(hovered.y)} r={5} fill={C.surface} stroke={C.teal} strokeWidth={2} />
+          </>
+        )}
+      </svg>
+
+      {/* Tooltip para la raíz */}
+      {isRootHovered && rootX != null && (
+        <div style={{
+          position: "absolute", top: Math.max(pad.t, zeroY - 70), left: Math.min(W - 100, rootX + 15),
+          background: "var(--white)", color: "var(--navy-dark)", padding: "8px 12px", borderRadius: "8px",
+          pointerEvents: "none", fontSize: "12px", boxShadow: "0 4px 15px rgba(0, 0, 0, 0.15)",
+          zIndex: 10, border: "1px solid var(--border)"
+        }}>
+          <div style={{ marginBottom: 4, fontWeight: "bold", borderBottom: `1px solid var(--border)`, paddingBottom: 2 }}>Raíz Encontrada</div>
+          <div>x: <span style={{ color: 'var(--blue)', fontWeight: "bold" }}>{raiz.toFixed(6)}</span></div>
+          <div>y: <span style={{ color: 'var(--blue)', fontWeight: "bold" }}>0.000000</span></div>
+        </div>
+      )}
+
+      {/* Tooltip para el resto de la curva */}
+      {hovered && (
+        <div style={{
+          position: "absolute", top: Math.max(pad.t, mousePos.y - 60), left: Math.min(W - 100, mousePos.x + 15),
+          background: "var(--white)", color: "var(--navy-dark)", padding: "8px 12px", borderRadius: "8px",
+          pointerEvents: "none", fontSize: "12px", boxShadow: "0 4px 15px rgba(0, 0, 0, 0.15)",
+          zIndex: 10, border: "1px solid var(--border)"
+        }}>
+          <div>x: <span style={{ color: 'var(--blue)', fontWeight: "bold" }}>{hovered.x.toFixed(6)}</span></div>
+          <div>y: <span style={{ color: 'var(--blue)', fontWeight: "bold" }}>{hovered.y.toFixed(6)}</span></div>
+        </div>
+      )}
+    </div>
+  );
 }
 
-export function ErrorChart({ histIzq, histDer, nameIzq, nameDer, tipoError }) {
-  if (!histIzq?.length || !histDer?.length) return null
-  const maxLen = Math.max(histIzq.length, histDer.length)
+// --- GRÁFICOS RESTANTES (Mantenidos igual porque Recharts es ideal aquí) ---
+
+export function ErrorChart({ histIzq, histDer, nameIzq, nameDer }) {
+  if (!histIzq?.length || !histDer?.length) return null;
+  const maxLen = Math.max(histIzq.length, histDer.length);
   const data = Array.from({ length: maxLen }, (_, i) => ({
     iter: i + 1,
     [nameIzq]: histIzq[i]?.error ?? null,
     [nameDer]: histDer[i]?.error ?? null,
-  }))
+  }));
   return (
     <ResponsiveContainer width="100%" height={320}>
       <LineChart data={data} margin={{ top: 16, right: 16, bottom: 24, left: 8 }}>
-        <CartesianGrid {...gridStyle}/>
-        <XAxis dataKey="iter" tick={axisStyle} tickLine={false} label={{ value: 'Iteración', position: 'insideBottom', offset: -12, fontSize: 11, fill: '#64748b' }}/>
-        <YAxis scale="log" domain={['auto', 'auto']} tickFormatter={v => v.toExponential(0)} tick={axisStyle} tickLine={false} width={60}/>
-        <Tooltip formatter={(v, name) => [v?.toExponential(4), name]} contentStyle={{ fontSize: 12, borderRadius: 8, border: '0.5px solid #e2e8f0' }}/>
-        <Legend wrapperStyle={{ fontSize: 12 }}/>
-        <Line dataKey={nameIzq} stroke="#3b82f6" strokeWidth={2.5} dot={{ r: 3 }} connectNulls={false} name={`Método A: ${nameIzq}`}/>
-        <Line dataKey={nameDer} stroke="#8b5cf6" strokeWidth={2.5} strokeDasharray="5 5" dot={{ r: 3 }} connectNulls={false} name={`Método B: ${nameDer}`}/>
+        <CartesianGrid {...gridStyle} />
+        <XAxis dataKey="iter" tick={axisStyle} tickLine={false} label={{ value: 'Iteración', position: 'insideBottom', offset: -12, fontSize: 11, fill: '#64748b' }} />
+        <YAxis scale="log" domain={['auto', 'auto']} tickFormatter={v => v.toExponential(0)} tick={axisStyle} tickLine={false} width={60} />
+        <RechartsTooltip formatter={(v, name) => [v?.toExponential(4), name]} contentStyle={{ borderRadius: 8 }} />
+        <Legend wrapperStyle={{ fontSize: 12 }} />
+        <Line dataKey={nameIzq} stroke="#3b82f6" strokeWidth={2.5} dot={{ r: 3 }} connectNulls={false} name={`Método A: ${nameIzq}`} />
+        <Line dataKey={nameDer} stroke="#8b5cf6" strokeWidth={2.5} strokeDasharray="5 5" dot={{ r: 3 }} connectNulls={false} name={`Método B: ${nameDer}`} />
       </LineChart>
     </ResponsiveContainer>
-  )
+  );
 }
 
 export function RadarChart2({ nameIzq, scoresIzq, nameDer, scoresDer }) {
-  const cats = ['VELOCIDAD', 'EFICIENCIA', 'ROBUSTEZ']
-  const data = cats.map((cat, i) => ({ cat, [nameIzq]: scoresIzq[i], [nameDer]: scoresDer[i] }))
+  const cats = ['VELOCIDAD', 'EFICIENCIA', 'ROBUSTEZ'];
+  const data = cats.map((cat, i) => ({ cat, [nameIzq]: scoresIzq[i], [nameDer]: scoresDer[i] }));
   return (
     <ResponsiveContainer width="100%" height={320}>
       <RadarChart data={data} margin={{ top: 16, right: 32, bottom: 16, left: 32 }}>
-        <PolarGrid stroke="rgba(200,200,200,0.4)"/>
-        <PolarAngleAxis dataKey="cat" tick={{ fontSize: 11, fill: '#0f172a' }}/>
-        <PolarRadiusAxis angle={90} domain={[0, 10]} tick={{ fontSize: 10, fill: '#64748b' }} tickCount={4}/>
-        <Radar name={nameIzq} dataKey={nameIzq} stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.25} strokeWidth={2.5}/>
-        <Radar name={nameDer} dataKey={nameDer} stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.2} strokeWidth={2.5} strokeDasharray="5 5"/>
-        <Legend wrapperStyle={{ fontSize: 12 }}/>
-        <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '0.5px solid #e2e8f0' }}/>
+        <PolarGrid stroke="rgba(200,200,200,0.4)" />
+        <PolarAngleAxis dataKey="cat" tick={{ fontSize: 11, fill: '#0f172a' }} />
+        <PolarRadiusAxis angle={90} domain={[0, 10]} tick={{ fontSize: 10, fill: '#64748b' }} tickCount={4} />
+        <Radar name={nameIzq} dataKey={nameIzq} stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.25} strokeWidth={2.5} />
+        <Radar name={nameDer} dataKey={nameDer} stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.2} strokeWidth={2.5} strokeDasharray="5 5" />
+        <Legend wrapperStyle={{ fontSize: 12 }} />
+        <RechartsTooltip contentStyle={{ borderRadius: 8 }} />
       </RadarChart>
     </ResponsiveContainer>
-  )
+  );
 }
