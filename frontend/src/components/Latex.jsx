@@ -21,7 +21,7 @@ export default function Latex({ tex, display = false }) {
   return (
     <span
       ref={ref}
-      style={display ? { display: 'block', textAlign: 'center', padding: '10px 0', fontSize: '1.1rem' } : {}}
+      style={display ? { display: 'block', textAlign: 'center', padding: '4px 0', fontSize: '1.1rem' } : {}}
     />
   )
 }

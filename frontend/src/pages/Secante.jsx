@@ -87,13 +87,15 @@ export default function Secante() {
     />
   ) : <EmptyPanel />
 
-  const code = (
-    <VSCodeBlock code={`def secante(x_n1, x_n, f, err):
-    for i in range(100):
+  const code = `def secante(x_n1, x_n, f, err=1e-${prec}):
+    for i in range(${settings.maxIters}):
         try:
             fx_n = evaluar_f(f, x_n)
             fx_n1 = evaluar_f(f, x_n1)
             
+            if abs(fx_n - fx_n1) < ${settings.ceroMaquina}:
+                return None
+
             x = x_n - fx_n * ((x_n - x_n1) / (fx_n - fx_n1))
             fx = evaluar_f(f, x)
             
@@ -102,8 +104,7 @@ export default function Secante() {
             else:
                 x_n, x_n1 = x, x_n
         except ZeroDivisionError:
-            return None`} />
-  )
+            return None`
 
   return (
     <MethodLayout
@@ -113,7 +114,9 @@ export default function Secante() {
       inputs={inputs}
       onCalcular={loading ? null : calcular}
       result={resultPanel}
-      codeSnippet={code}
+      codeRaw={code}
+      iteraciones={result?.iteraciones}
+      columns={COLS}
     />
   )
 }

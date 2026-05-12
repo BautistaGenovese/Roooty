@@ -17,8 +17,6 @@ const getDefaultSettings = () => {
     maxIters: 100,
     ceroMaquina: 1e-12,
     limiteInfinito: 1e6,
-    simularTruncamiento: false,
-    decimalesTrunc: 4,
     darkMode: false,
   }
 }
@@ -42,8 +40,6 @@ export function SettingsProvider({ children }) {
     maxIters: 100,
     ceroMaquina: 1e-12,
     limiteInfinito: 1e6,
-    simularTruncamiento: false,
-    decimalesTrunc: 4,
     darkMode: false,
   })
 

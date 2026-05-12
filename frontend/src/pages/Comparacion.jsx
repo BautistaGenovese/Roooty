@@ -200,7 +200,7 @@ export default function Comparacion() {
               🔬 FUNCIÓN EN ANÁLISIS
             </span>
           </div>
-          <div style={{ textAlign: 'center', margin: '8px 0 32px' }}>
+          <div style={{ textAlign: 'center', margin: '8px 0 16px' }}>
             <code style={{ fontFamily: 'var(--font-mono)', fontSize: '1.1rem', color: 'var(--navy)', fontWeight: 700 }}>
               f(x) = {f}
             </code>

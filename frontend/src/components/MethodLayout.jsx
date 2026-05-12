@@ -20,13 +20,18 @@ export function formatMathToLatex(f) {
   return tex;
 }
 
-export function Expander({ title, children }) {
+export function Expander({ title, children, className = '', badge = null }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className="expander" style={{ marginBottom: '1rem' }}>
+    <div className={`expander ${className}`} style={{ marginBottom: '1rem' }}>
       <div className="expander-header" onClick={() => setOpen(o => !o)}>
         <span>{title}</span>
-        <span className={`expander-arrow ${open ? 'open' : ''}`}>▼</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          {badge && (
+            <span className="badge" style={{ fontSize: '0.68rem', letterSpacing: '0.06em' }}>{badge}</span>
+          )}
+          <span className={`expander-arrow ${open ? 'open' : ''}`}>▼</span>
+        </div>
       </div>
       <div className={`expander-body-wrapper ${open ? 'open' : ''}`} style={{ display: open ? 'block' : 'none' }}>
         <div className="expander-body">{children}</div>
@@ -50,7 +55,6 @@ export function VSCodeBlock({ code }) {
     const tokens = []
     let i = 0
     while (i < src.length) {
-      // Single-line comment → grab until newline
       if (src[i] === '#') {
         const end = src.indexOf('\n', i)
         const val = end === -1 ? src.slice(i) : src.slice(i, end)
@@ -58,7 +62,6 @@ export function VSCodeBlock({ code }) {
         i += val.length
         continue
       }
-      // String literal
       if (src[i] === '"' || src[i] === "'") {
         const q = src[i]
         let j = i + 1
@@ -70,7 +73,6 @@ export function VSCodeBlock({ code }) {
         i = j + 1
         continue
       }
-      // Number
       if (/\d/.test(src[i]) || (src[i] === '.' && /\d/.test(src[i + 1] || ''))) {
         let j = i
         while (j < src.length && /[\d.eE]/.test(src[j])) j++
@@ -78,7 +80,6 @@ export function VSCodeBlock({ code }) {
         i = j
         continue
       }
-      // Identifier / keyword / function-call
       if (/[a-zA-Z_]/.test(src[i])) {
         let j = i
         while (j < src.length && /\w/.test(src[j])) j++
@@ -89,7 +90,6 @@ export function VSCodeBlock({ code }) {
         i = j
         continue
       }
-      // Operator (single or double char)
       if (/[+\-*/%=<>!&|^~]/.test(src[i])) {
         let j = i + 1
         if (j < src.length && /[=<>&|]/.test(src[j])) j++
@@ -97,34 +97,42 @@ export function VSCodeBlock({ code }) {
         i = j
         continue
       }
-      // Everything else: parens, brackets, commas, spaces, newlines …
       tokens.push({ type: 'plain', value: src[i] })
       i++
     }
     return tokens
   }
 
-  const html = tokenize(code)
-    .map(({ type, value }) => {
-      const v = esc(value)
-      return type === 'plain' ? v : `<span class="${type}">${v}</span>`
-    })
-    .join('')
+  const lines = code.trimEnd().replace(/^\n/, '').split('\n')
 
   return (
-    <pre
-      className="code-block"
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
+    <div className="code-block">
+      {lines.map((line, i) => {
+        const lineHtml = tokenize(line)
+          .map(({ type, value }) => {
+            const v = esc(value)
+            return type === 'plain' ? v : `<span class="${type}">${v}</span>`
+          })
+          .join('')
+        
+        return (
+          <div key={i} className="code-line">
+            <span className="line-number">{i + 1}</span>
+            <div className="line-content" dangerouslySetInnerHTML={{ __html: lineHtml || '&nbsp;' }} />
+          </div>
+        )
+      })}
+    </div>
   )
 }
+
 
 
 // ─── ITERATIONS TABLE ─────────────────────────────────────────────────────────
 export function IterTable({ rows, columns }) {
   if (!rows || rows.length === 0) return null
   return (
-    <div className="table-wrap">
+    <div className="table-wrap" style={{ fontSize: '0.78rem' }}>
       <table>
         <thead>
           <tr>
@@ -314,11 +322,10 @@ export function PdfButton({ title, f, params, result, columns }) {
 export function ResultsPanel({
   f, raiz, iteraciones, columns,
   xMin, xMax, chartKey,
-  showToggle = true, isPuntoFijo = false, isRegresion = false,
+  isPuntoFijo = false, isRegresion = false,
   regresionChart = null, regresionData = null,
   extraMetrics = null,
 }) {
-  const [showIters, setShowIters] = useState(true)
   const [chartData, setChartData] = useState(null)
   const { settings } = useSettings()
 
@@ -331,11 +338,11 @@ export function ResultsPanel({
 
   return (
     <div>
-      <div className="formula-display" style={{ textAlign: 'center', margin: '8px 0' }}>
-        <span style={{ fontSize: '0.78rem', color: 'var(--slate)', fontWeight: 700, letterSpacing: 1, display: 'block', marginBottom: 4 }}>
+      <div className="formula-display" style={{ textAlign: 'center', marginBottom: '8px' }}>
+        <span style={{ fontSize: '0.7rem', color: 'var(--slate)', fontWeight: 700, letterSpacing: 1.2, display: 'block', opacity: 0.8 }}>
           FUNCIÓN EVALUADA
         </span>
-        <div style={{ color: 'var(--navy)' }}>
+        <div style={{ color: 'var(--navy)', marginTop: '-2px' }}>
           {isRegresion ? (
             <code style={{ fontFamily: 'var(--font-mono)', fontSize: '1rem', fontWeight: 700 }}>Regresión Lineal</code>
           ) : (
@@ -352,34 +359,27 @@ export function ResultsPanel({
             f={isRegresion ? regresionChart : chartData}
             raiz={raiz}
             xMin={xMin} xMax={xMax}
-            iteraciones={isRegresion ? regresionData : (showIters ? iteraciones : null)}
             chartKey={chartKey}
             isPuntoFijo={isPuntoFijo}
             isRegresion={isRegresion}
           />
         </div>
       </div>
-
-      {showToggle && !isRegresion && (
-        <div className="toggle-wrap no-pdf" style={{ marginTop: '1rem', marginBottom: '1rem' }} onClick={() => setShowIters(s => !s)}>
-          <div className={`toggle-switch ${showIters ? 'on' : ''}`}>
-            <div className="toggle-knob" />
-          </div>
-          <span className="toggle-label">Mostrar iteraciones en el gráfico</span>
-        </div>
-      )}
-
-      {iteraciones && iteraciones.length > 0 && (
-        <Expander title="Ver tabla de iteraciones">
-          <IterTable rows={iteraciones} columns={columns} />
-        </Expander>
-      )}
     </div>
   )
 }
 
 // ─── METHOD PAGE LAYOUT ───────────────────────────────────────────────────────
-export default function MethodLayout({ title, badge, teoria, inputs, onCalcular, result, codeSnippet }) {
+export default function MethodLayout({ title, badge, teoria, inputs, onCalcular, result, codeRaw, iteraciones, columns }) {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = () => {
+    if (!codeRaw) return
+    navigator.clipboard.writeText(codeRaw.trim())
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
   return (
     <div id="pdf-content" className="page-content-wrap">
       <h1 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--navy)', marginBottom: '1rem' }}>
@@ -402,7 +402,7 @@ export default function MethodLayout({ title, badge, teoria, inputs, onCalcular,
             {inputs}
           </div>
 
-          <div style={{ marginTop: '1rem' }}>
+          <div style={{ marginTop: 'auto', paddingTop: '1.5rem' }}>
             <button className="btn btn-primary no-pdf" onClick={onCalcular}>
               🚀 Calcular y Graficar
             </button>
@@ -415,12 +415,30 @@ export default function MethodLayout({ title, badge, teoria, inputs, onCalcular,
         </div>
       </div>
 
-      {codeSnippet && (
-        <div className="no-pdf card" style={{ marginTop: '2rem' }}>
-          <div className="card-header" style={{ marginBottom: '1rem' }}>
+      {/* ITERATION TABLE — outside the cards, full width */}
+      {iteraciones && iteraciones.length > 0 && (
+        <div className="no-pdf" style={{ marginTop: '1.5rem' }}>
+          <Expander
+            className="expander--table"
+            title="📊 Ver tabla de iteraciones"
+            badge={`${iteraciones.length} PASOS`}
+          >
+            <IterTable rows={iteraciones} columns={columns} />
+          </Expander>
+        </div>
+      )}
+
+      {codeRaw && (
+        <div className="no-pdf card card--flush" style={{ marginTop: '2rem' }}>
+          <div className="card-header" style={{ justifyContent: 'space-between' }}>
             <h4 style={{ fontSize: '1.2rem' }}>Código en Python</h4>
+            <button onClick={handleCopy} className="btn-copy-code">
+              {copied ? '✅ Copiado' : '📋 Copiar código'}
+            </button>
           </div>
-          {codeSnippet}
+          <div className="code-container-flush">
+            <VSCodeBlock code={codeRaw} />
+          </div>
         </div>
       )}
     </div>

@@ -33,7 +33,7 @@ export default function Newton() {
     setLoading(true); setError(null)
     try {
       const data = await apiPost('newton', buildPayload(f, settings, { x_0: x0, err: 10 ** (-prec) }))
-      setResult(data)
+      setResult({ ...data, usedF: f })
     } catch (e) {
       setError(e.response?.data?.detail || 'Error al calcular.')
       setResult(null)
@@ -71,18 +71,17 @@ export default function Newton() {
 
   const resultPanel = result ? (
     <ResultsPanel
-      f={f} raiz={result.raiz} iteraciones={result.iteraciones}
+      f={result.usedF} raiz={result.raiz} iteraciones={result.iteraciones}
       columns={COLS}
       xMin={result.raiz - 5} xMax={result.raiz + 5}
       chartKey={`newton-${result.raiz}`}
     />
   ) : <EmptyPanel />
 
-  const code = (
-    <VSCodeBlock code={`def newton(x_n, f, err):
+  const code = `def newton(x_n, f, err=1e-${prec}):
     derivada = str(sp.diff(f, 'x'))
     
-    for i in range(100):
+    for i in range(${settings.maxIters}):
         fa = evaluar_f(f, x_n)
         d_val = evaluar_f(derivada, x_n)
         
@@ -91,14 +90,13 @@ export default function Newton() {
         
         x_n1 = x_n - (fa / d_val)
         
-        if abs(evaluar_f(f, x_n1)) <= 1e-12:
+        if abs(evaluar_f(f, x_n1)) <= ${settings.ceroMaquina}:
             return x_n1
         if abs(x_n1 - x_n) <= err:
             return x_n1
         
         x_n = x_n1
-    return None`} />
-  )
+    return None`
 
   return (
     <MethodLayout
@@ -108,7 +106,9 @@ export default function Newton() {
       inputs={inputs}
       onCalcular={loading ? null : calcular}
       result={resultPanel}
-      codeSnippet={code}
+      codeRaw={code}
+      iteraciones={result?.iteraciones}
+      columns={COLS}
     />
   )
 }

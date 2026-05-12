@@ -36,7 +36,7 @@ export default function RegulaFalsi() {
     setLoading(true); setError(null)
     try {
       const data = await apiPost('regula_falsi', buildPayload(f, settings, { a, b, err: 10 ** (-prec) }))
-      setResult(data)
+      setResult({ ...data, usedF: f, usedA: a, usedB: b })
     } catch (e) {
       setError(e.response?.data?.detail || 'Error al calcular.')
       setResult(null)
@@ -80,28 +80,27 @@ export default function RegulaFalsi() {
 
   const resultPanel = result ? (
     <ResultsPanel
-      f={f} raiz={result.raiz} iteraciones={result.iteraciones}
-      columns={COLS} xMin={a} xMax={b}
+      f={result.usedF} raiz={result.raiz} iteraciones={result.iteraciones}
+      columns={COLS} xMin={result.usedA} xMax={result.usedB}
       chartKey={`rf-${result.raiz}`}
     />
   ) : <EmptyPanel />
 
-  const code = (
-    <VSCodeBlock code={`def regula_falsi(a, b, err):
+  const code = `def regula_falsi(a, b, err=1e-${prec}):
     fa = f(a); fb = f(b)
     
     if fa * fb >= 0:
         return None
     
     x_anterior = a
-    for i in range(100):
-        if abs(fb - fa) < 1e-12:
+    for i in range(${settings.maxIters}):
+        if abs(fb - fa) < ${settings.ceroMaquina}:
             return None
         
         x = b - (fb * (b - a)) / (fb - fa)
         fx = f(x)
         
-        if abs(fx) < 1e-12:
+        if abs(fx) < ${settings.ceroMaquina}:
             return x
         if abs(x - x_anterior) < err:
             break
@@ -112,8 +111,7 @@ export default function RegulaFalsi() {
             a = x; fa = fx
             
         x_anterior = x
-    return x`} />
-  )
+    return x`
 
   return (
     <MethodLayout
@@ -123,7 +121,9 @@ export default function RegulaFalsi() {
       inputs={inputs}
       onCalcular={loading ? null : calcular}
       result={resultPanel}
-      codeSnippet={code}
+      codeRaw={code}
+      iteraciones={result?.iteraciones}
+      columns={COLS}
     />
   )
 }

@@ -106,10 +106,11 @@ export default function Regresion() {
 
   const resultPanel = result && chartData ? (
     <div>
-      <div style={{ textAlign: 'center', marginBottom: 8 }}>
-        <span style={{ fontSize: '0.78rem', color: 'var(--slate)', fontWeight: 700, letterSpacing: 1 }}>FUNCIÓN APROXIMADA</span>
-        <br />
-        <div style={{ color: 'var(--navy)' }}>
+      <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+        <span style={{ fontSize: '0.7rem', color: 'var(--slate)', fontWeight: 700, letterSpacing: 1.2, display: 'block', opacity: 0.8 }}>
+          FUNCIÓN APROXIMADA
+        </span>
+        <div style={{ color: 'var(--navy)', marginTop: '-2px' }}>
           <Latex tex={`${result.m.toFixed(4)}x + ${result.b >= 0 ? result.b.toFixed(4) : `(${result.b.toFixed(4)})`}`} display />
         </div>
       </div>
@@ -141,8 +142,7 @@ export default function Regresion() {
     </div>
   ) : <EmptyPanel />
 
-  const code = (
-    <VSCodeBlock code={`def calcular_regresion(datos):
+  const code = `def calcular_regresion(datos):
     m, b = statistics.linear_regression(
         datos['x'], datos['y']
     )
@@ -150,8 +150,7 @@ export default function Regresion() {
         raiz = -b / m
         return m, b, raiz
     else:
-        return None`} />
-  )
+        return None`
 
   return (
     <MethodLayout
@@ -161,7 +160,7 @@ export default function Regresion() {
       inputs={inputs}
       onCalcular={loading ? null : calcular}
       result={resultPanel}
-      codeSnippet={code}
+      codeRaw={code}
     />
   )
 }

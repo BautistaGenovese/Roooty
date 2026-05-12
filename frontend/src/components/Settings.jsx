@@ -121,16 +121,7 @@ export default function Settings() {
             />
           </div>
 
-          <hr className="divider" />
-          <p style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: 8 }}>🧪 Simulación Avanzada</p>
-          <Toggle label="Simular Aritmética Finita" value={settings.simularTruncamiento} onChange={v => update('simularTruncamiento', v)} />
 
-          {settings.simularTruncamiento && (
-            <div className="form-group" style={{ marginTop: 8 }}>
-              <label className="form-label">Cifras decimales a retener: <strong>{settings.decimalesTrunc}</strong></label>
-              <input type="range" min={2} max={8} value={settings.decimalesTrunc} onChange={e => update('decimalesTrunc', parseInt(e.target.value))} />
-            </div>
-          )}
 
           <hr className="divider" />
           <button className="btn btn-secondary" onClick={reset} style={{ marginBottom: 0 }}>

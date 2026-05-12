@@ -108,15 +108,14 @@ export default function PuntoFijo() {
     />
   ) : <EmptyPanel />
 
-  const code = (
-    <VSCodeBlock code={`def punto_fijo(x0, err):
+  const code = `def punto_fijo(x0, err=1e-${prec}):
     x_actual = x0
-    for i in range(100):
+    for i in range(${settings.maxIters}):
         try:
             x_nuevo = g(x_actual)
             error = abs(x_nuevo - x_actual)
             
-            if error > 1e6:
+            if error > ${settings.limiteInfinito}:
                 return None
             if error <= err:
                 return x_nuevo
@@ -124,8 +123,7 @@ export default function PuntoFijo() {
             x_actual = x_nuevo
         except Exception:
             return None
-    return x_actual`} />
-  )
+    return x_actual`
 
   return (
     <MethodLayout
@@ -135,7 +133,9 @@ export default function PuntoFijo() {
       inputs={inputs}
       onCalcular={loading ? null : calcular}
       result={resultPanel}
-      codeSnippet={code}
+      codeRaw={code}
+      iteraciones={result?.iteraciones}
+      columns={COLS}
     />
   )
 }
