@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useSettings } from '../hooks/useSettings'
 import { apiPost, buildPayload } from '../utils/api'
 import Latex from '../components/Latex'
-import MethodLayout, { Expander, FormulaInput, PrecisionSlider, EmptyPanel, ResultsPanel, PdfButton } from '../components/MethodLayout'
+import MethodLayout, { Expander, FormulaInput, PrecisionSlider, EmptyPanel, ResultsPanel, PdfButton, VSCodeBlock } from '../components/MethodLayout'
 
 const COLS = [
   { key: 'x', label: 'x[i]' }, { key: 'fx', label: "f(x[i])" },
@@ -79,7 +79,7 @@ export default function Newton() {
   ) : <EmptyPanel />
 
   const code = (
-    <pre className="code-block">{`def newton(x_n, f, err):
+    <VSCodeBlock code={`def newton(x_n, f, err):
     derivada = str(sp.diff(f, 'x'))
     
     for i in range(100):
@@ -97,7 +97,7 @@ export default function Newton() {
             return x_n1
         
         x_n = x_n1
-    return None`}</pre>
+    return None`} />
   )
 
   return (

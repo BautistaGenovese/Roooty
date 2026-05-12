@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useSettings } from '../hooks/useSettings'
 import { apiPost, buildPayload } from '../utils/api'
 import Latex from '../components/Latex'
-import MethodLayout, { Expander, FormulaInput, PrecisionSlider, EmptyPanel, ResultsPanel, PdfButton } from '../components/MethodLayout'
+import MethodLayout, { Expander, FormulaInput, PrecisionSlider, EmptyPanel, ResultsPanel, PdfButton, VSCodeBlock } from '../components/MethodLayout'
 
 const COLS = [
   { key: 'a', label: 'a[i]' }, { key: 'b', label: 'b[i]' },
@@ -87,7 +87,7 @@ export default function RegulaFalsi() {
   ) : <EmptyPanel />
 
   const code = (
-    <pre className="code-block">{`def regula_falsi(a, b, err):
+    <VSCodeBlock code={`def regula_falsi(a, b, err):
     fa = f(a); fb = f(b)
     
     if fa * fb >= 0:
@@ -112,7 +112,7 @@ export default function RegulaFalsi() {
             a = x; fa = fx
             
         x_anterior = x
-    return x`}</pre>
+    return x`} />
   )
 
   return (

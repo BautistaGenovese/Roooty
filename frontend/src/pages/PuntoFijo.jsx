@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useSettings } from '../hooks/useSettings'
 import { apiPost, buildPayload } from '../utils/api'
 import Latex from '../components/Latex'
-import MethodLayout, { Expander, FormulaInput, PrecisionSlider, EmptyPanel, ResultsPanel, PdfButton } from '../components/MethodLayout'
+import MethodLayout, { Expander, FormulaInput, PrecisionSlider, EmptyPanel, ResultsPanel, PdfButton, VSCodeBlock } from '../components/MethodLayout'
 
 const COLS = [
   { key: 'x', label: 'x[i]' }, { key: 'gx', label: 'g(x[i])' }, { key: 'error', label: 'Error' },
@@ -109,7 +109,7 @@ export default function PuntoFijo() {
   ) : <EmptyPanel />
 
   const code = (
-    <pre className="code-block">{`def punto_fijo(x0, err):
+    <VSCodeBlock code={`def punto_fijo(x0, err):
     x_actual = x0
     for i in range(100):
         try:
@@ -124,7 +124,7 @@ export default function PuntoFijo() {
             x_actual = x_nuevo
         except Exception:
             return None
-    return x_actual`}</pre>
+    return x_actual`} />
   )
 
   return (

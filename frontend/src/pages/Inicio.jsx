@@ -24,23 +24,65 @@ export default function Inicio() {
         </div>
 
         <div className="hero-anim">
+          {/* f(x) = x³ - x - 2 | root ≈ 1.5214
+              x range: -1.5 → 2.1  mapped to SVGx: 30 → 275
+              y range: -4   → 6    mapped to SVGy: 165 → 10
+              SVGx = 30 + (mx+1.5)/3.6 * 245
+              SVGy = 165 - (my+4)/10  * 155  */}
           <svg viewBox="0 0 300 180" className="curve-svg">
-            {/* Axes */}
-            <line x1="30" y1="160" x2="280" y2="160" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" />
-            <line x1="50" y1="10" x2="50" y2="165" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" />
-            {/* Parabola curve */}
-            <path d="M 60 150 Q 140 10 250 120" stroke="#00A38C" strokeWidth="3" fill="none" />
-            {/* Dots */}
-            {[[80,120],[110,60],[170,45],[210,80]].map(([cx,cy],i) => (
-              <circle key={i} cx={cx} cy={cy} r="5" fill="rgba(255,255,255,0.4)" stroke="#FF6F91" strokeWidth="2" />
+            {/* Subtle grid */}
+            {[55, 103, 150].map(y => <line key={`hy${y}`} x1="28" y1={y} x2="278" y2={y} stroke="rgba(255,255,255,0.05)" strokeWidth="1" />)}
+            {[100, 167, 234].map(x => <line key={`vx${x}`} x1={x} y1="10" x2={x} y2="168" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />)}
+
+            {/* X-axis  (y=0 → SVGy=103) */}
+            <line x1="22" y1="103" x2="278" y2="103" stroke="rgba(255,255,255,0.35)" strokeWidth="1.5" />
+            {/* Y-axis  (x=0 → SVGx=132) */}
+            <line x1="132" y1="8" x2="132" y2="170" stroke="rgba(255,255,255,0.35)" strokeWidth="1.5" />
+
+            {/* Axis arrowheads */}
+            <polygon points="278,100 285,103 278,106" fill="rgba(255,255,255,0.35)" />
+            <polygon points="129,8 132,1 135,8" fill="rgba(255,255,255,0.35)" />
+
+            {/* Axis labels */}
+            <text x="273" y="115" fill="rgba(255,255,255,0.5)" fontSize="9" fontFamily="var(--font-mono)">x</text>
+            <text x="136" y="13" fill="rgba(255,255,255,0.5)" fontSize="9" fontFamily="var(--font-mono)">y</text>
+
+            {/* Tick marks on X-axis */}
+            {[[-1, 64], [1, 200], [1.52, 234]].map(([v, sx]) => (
+              <g key={v}>
+                <line x1={sx} y1="100" x2={sx} y2="106" stroke="rgba(255,255,255,0.4)" strokeWidth="1" />
+                <text x={sx - 4} y="115" fill="rgba(255,255,255,0.4)" fontSize="8" fontFamily="var(--font-mono)">{v}</text>
+              </g>
             ))}
-            {/* Root dot */}
-            <circle cx="155" cy="28" r="7" fill="#00A38C">
-              <animate attributeName="r" values="7;12;7" dur="2s" repeatCount="indefinite" />
+
+            {/* f(x) = x³ - x - 2  — pre-computed polyline points */}
+            <polyline
+              fill="none"
+              stroke="var(--blue)"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              points="
+                30,163
+                44,148  57,138  71,131  84,128
+                98,128  111,130 125,133 138,136
+                152,138 165,140 179,140 192,137
+                206,130 219,120 233,105
+                241,93  246,84
+                260,57  273,23
+              "
+            />
+
+            {/* Root dot at x≈1.52, y=0 → SVG(234, 103) */}
+            <circle cx="234" cy="103" r="5" fill="var(--success)">
+              <animate attributeName="r" values="5;8;5" dur="2s" repeatCount="indefinite" />
               <animate attributeName="opacity" values="1;0.6;1" dur="2s" repeatCount="indefinite" />
             </circle>
-            <text x="162" y="24" fill="white" fontSize="10" fontFamily="Manrope, sans-serif">Raíz Calculada</text>
-            <text x="85" y="115" fill="#cbd5e1" fontSize="9" fontFamily="Manrope, sans-serif">Iteraciones</text>
+            {/* Root label */}
+            <text x="250" y="95" fill="var(--success)" fontSize="9" fontFamily="var(--font-main)" fontWeight="700">x* ≈ 1.52</text>
+
+            {/* f(x) label beside the curve */}
+            <text x="235" y="30" fill="white" fontSize="10" fontFamily="var(--font-mono)" opacity="0.9">f(x)</text>
           </svg>
         </div>
       </div>
@@ -306,12 +348,12 @@ export default function Inicio() {
         👥 El Escuadrón detrás del Código
       </h3>
       <p style={{ textAlign: 'center', color: 'var(--slate)', marginBottom: '1.5rem', maxWidth: '700px', margin: '0 auto 1.5rem auto', lineHeight: '1.6' }}>
-        El desarrollo de esta plataforma ha sido impulsado por un equipo comprometido con la excelencia académica y la precisión algorítmica. Un reconocimiento especial a <strong>Bautista Genovese</strong> por la arquitectura principal del proyecto, acompañado por este excelente grupo de profesionales:
+        El desarrollo de esta plataforma ha sido impulsado por un equipo comprometido con la excelencia académica y la precisión algorítmica:
       </p>
 
       <div className="escuadron">
         {[
-          { initials: 'BG', name: 'Bautista', bg: '#1e293b', color: 'white', isLead: true },
+          { initials: 'BG', name: 'Bautista', bg: 'var(--bg)', color: 'var(--font-main)', isLead: true },
           { initials: 'IG', name: 'Ignacio', bg: '#e0f2fe', color: '#0284c7' },
           { initials: 'JG', name: 'Juan', bg: '#f3e8ff', color: '#9333ea' },
           { initials: 'TK', name: 'Trini', bg: '#ffedd5', color: '#ea580c' },

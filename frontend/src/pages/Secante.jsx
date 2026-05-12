@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useSettings } from '../hooks/useSettings'
 import { apiPost, buildPayload } from '../utils/api'
 import Latex from '../components/Latex'
-import MethodLayout, { Expander, FormulaInput, PrecisionSlider, EmptyPanel, ResultsPanel, PdfButton } from '../components/MethodLayout'
+import MethodLayout, { Expander, FormulaInput, PrecisionSlider, EmptyPanel, ResultsPanel, PdfButton, VSCodeBlock } from '../components/MethodLayout'
 
 const COLS = [
   { key: 'x', label: 'x[i]' }, { key: 'fx', label: 'f(x[i])' },
@@ -88,7 +88,7 @@ export default function Secante() {
   ) : <EmptyPanel />
 
   const code = (
-    <pre className="code-block">{`def secante(x_n1, x_n, f, err):
+    <VSCodeBlock code={`def secante(x_n1, x_n, f, err):
     for i in range(100):
         try:
             fx_n = evaluar_f(f, x_n)
@@ -102,7 +102,7 @@ export default function Secante() {
             else:
                 x_n, x_n1 = x, x_n
         except ZeroDivisionError:
-            return None`}</pre>
+            return None`} />
   )
 
   return (

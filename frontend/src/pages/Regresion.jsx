@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { apiPost } from '../utils/api'
 import Latex from '../components/Latex'
-import MethodLayout, { Expander, EmptyPanel, PdfButton, MetricsBar, IterTable } from '../components/MethodLayout'
+import MethodLayout, { Expander, EmptyPanel, PdfButton, MetricsBar, IterTable, VSCodeBlock } from '../components/MethodLayout'
 import Chart from '../components/Chart'
 
 export default function Regresion() {
@@ -142,7 +142,7 @@ export default function Regresion() {
   ) : <EmptyPanel />
 
   const code = (
-    <pre className="code-block">{`def calcular_regresion(datos):
+    <VSCodeBlock code={`def calcular_regresion(datos):
     m, b = statistics.linear_regression(
         datos['x'], datos['y']
     )
@@ -150,7 +150,7 @@ export default function Regresion() {
         raiz = -b / m
         return m, b, raiz
     else:
-        return None`}</pre>
+        return None`} />
   )
 
   return (

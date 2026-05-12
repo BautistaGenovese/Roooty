@@ -18,9 +18,9 @@ function MainContent({ children }) {
 
   useEffect(() => {
     if (mainRef.current) {
-      mainRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+      mainRef.current.scrollTo({ top: 0, behavior: 'instant' });
     }
-  }, [location.pathname]);
+  }, [location.key]);
 
   return (
     <main className="main-content" ref={mainRef}>

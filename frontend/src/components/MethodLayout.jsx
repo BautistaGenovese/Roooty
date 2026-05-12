@@ -35,6 +35,91 @@ export function Expander({ title, children }) {
   )
 }
 
+export function VSCodeBlock({ code }) {
+  const KEYWORDS = new Set([
+    'def','if','else','elif','for','while','return','import','from',
+    'as','None','True','False','break','continue','in','pass','with',
+    'try','except','finally','raise','range','abs','and','or','not','is',
+    'lambda','class','global','nonlocal','del','yield','assert','print',
+  ])
+
+  const esc = (s) =>
+    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+  const tokenize = (src) => {
+    const tokens = []
+    let i = 0
+    while (i < src.length) {
+      // Single-line comment → grab until newline
+      if (src[i] === '#') {
+        const end = src.indexOf('\n', i)
+        const val = end === -1 ? src.slice(i) : src.slice(i, end)
+        tokens.push({ type: 'comment', value: val })
+        i += val.length
+        continue
+      }
+      // String literal
+      if (src[i] === '"' || src[i] === "'") {
+        const q = src[i]
+        let j = i + 1
+        while (j < src.length && src[j] !== q) {
+          if (src[j] === '\\') j++
+          j++
+        }
+        tokens.push({ type: 'string', value: src.slice(i, j + 1) })
+        i = j + 1
+        continue
+      }
+      // Number
+      if (/\d/.test(src[i]) || (src[i] === '.' && /\d/.test(src[i + 1] || ''))) {
+        let j = i
+        while (j < src.length && /[\d.eE]/.test(src[j])) j++
+        tokens.push({ type: 'number', value: src.slice(i, j) })
+        i = j
+        continue
+      }
+      // Identifier / keyword / function-call
+      if (/[a-zA-Z_]/.test(src[i])) {
+        let j = i
+        while (j < src.length && /\w/.test(src[j])) j++
+        const word = src.slice(i, j)
+        if (KEYWORDS.has(word))   tokens.push({ type: 'keyword',  value: word })
+        else if (src[j] === '(') tokens.push({ type: 'function', value: word })
+        else                      tokens.push({ type: 'plain',    value: word })
+        i = j
+        continue
+      }
+      // Operator (single or double char)
+      if (/[+\-*/%=<>!&|^~]/.test(src[i])) {
+        let j = i + 1
+        if (j < src.length && /[=<>&|]/.test(src[j])) j++
+        tokens.push({ type: 'operator', value: src.slice(i, j) })
+        i = j
+        continue
+      }
+      // Everything else: parens, brackets, commas, spaces, newlines …
+      tokens.push({ type: 'plain', value: src[i] })
+      i++
+    }
+    return tokens
+  }
+
+  const html = tokenize(code)
+    .map(({ type, value }) => {
+      const v = esc(value)
+      return type === 'plain' ? v : `<span class="${type}">${v}</span>`
+    })
+    .join('')
+
+  return (
+    <pre
+      className="code-block"
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  )
+}
+
+
 // ─── ITERATIONS TABLE ─────────────────────────────────────────────────────────
 export function IterTable({ rows, columns }) {
   if (!rows || rows.length === 0) return null
