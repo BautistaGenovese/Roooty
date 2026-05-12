@@ -1,180 +1,130 @@
-# 🔢 Roooty Lab
+# <p align="center">🔬 Roooty Lab</p>
 
-Plataforma de Análisis Numérico — **React + FastAPI**, empaquetada con Docker.
+<p align="center">
+  <strong>Plataforma Profesional de Análisis Numérico</strong><br>
+  <i>Potencia, precisión y visualización en tiempo real.</i>
+</p>
 
----
-
-## 📋 Requisitos previos (Windows)
-
-| Herramienta | Versión mínima | Descarga |
-|---|---|---|
-| Docker Desktop | 4.x | https://www.docker.com/products/docker-desktop |
-
-> **Eso es todo.** Docker Desktop incluye `docker compose` y todo lo necesario.
-> No necesitás instalar Python ni Node.js en tu máquina.
-
----
-
-## 🚀 Instalación y arranque
-
-### Paso 1 — Abrí Docker Desktop
-Asegurate de que Docker Desktop esté corriendo (ícono en la barra del sistema).
-
-### Paso 2 — Abrí una terminal (PowerShell o CMD)
-
-```powershell
-# Entrá a la carpeta del proyecto
-cd roooty
-
-# Construí y levantá los contenedores (primera vez tarda ~2-3 minutos)
-docker compose up --build
-```
-
-### Paso 3 — Abrí el navegador
-
-```
-http://localhost
-```
-
-¡Listo! La app ya está corriendo.
+<p align="center">
+  <img src="https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi" alt="FastAPI">
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React">
+  <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
+  <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite">
+</p>
 
 ---
 
-## 🛠️ Desarrollo en tiempo real (Hot-Reloading)
+## ✨ Características Principales
 
-Si querés modificar el código y ver los cambios al instante sin reconstruir Docker, tenés dos opciones:
+Roooty Lab es una herramienta integral para estudiantes e ingenieros que buscan resolver problemas complejos de análisis numérico con una interfaz moderna y amigable.
 
-### Opción 1: Localmente (Recomendado y más rápido)
-Necesitás tener [Python](https://www.python.org/downloads/) y [Node.js](https://nodejs.org/es/) instalados.
+- 📈 **Visualización Interactiva**: Gráficos dinámicos con soporte para funciones trigonométricas y algebraicas.
+- 🧪 **Métodos de Raíces**: Bisección, Regula Falsi, Newton-Raphson, Secante y Punto Fijo.
+- 📊 **Análisis de Datos**: Regresión lineal con cálculo de correlación (R) y determinación (R²).
+- 📑 **Reportes Pro**: Exportación de resultados a PDF con tablas de iteraciones detalladas.
+- ⚡ **Alto Rendimiento**: Cálculos optimizados en el backend con Python y SymPy.
+- 📱 **Responsive Design**: Totalmente funcional en tablets, móviles y PCs.
 
-**1. Levantar el Backend:**
-Abre una terminal y ejecuta:
-```powershell
+---
+
+## 🚀 Cómo correrlo en tu PC (Paso a paso)
+
+He diseñado este proceso para que sea **extremadamente sencillo**. Tienes dos formas de hacerlo:
+
+### Opción A: La forma fácil (Recomendado 🐳)
+*Ideal si no quieres instalar Python ni Node.js. Solo necesitas **Docker Desktop**.*
+
+1. **Descarga el código**: Dale al botón verde de "Code" arriba y elige "Download ZIP", o clona el repo:
+   ```bash
+   git clone https://github.com/BautistaGenovese/Roooty.git
+   cd Roooty
+   ```
+2. **Abre Docker Desktop**: Asegúrate de que el programa esté abierto.
+3. **Lanza la app**:
+   - La **primera** vez:
+        ```bash
+        docker compose up --build
+        ```
+   
+   - Las siguientes veces: Solo abre Docker Desktop, entra a la carpeta del proyecto y ejecuta:
+        ```bash
+        docker compose up
+        ```
+5. **¡Listo!**: Abre tu navegador en [http://localhost](http://localhost).
+- 🚦Para detener la app:
+  
+   ```bash
+   docker compose down
+   ```
+
+
+---
+
+### Opción B: La forma manual 🛠️
+*Si prefieres correrlo sin Docker, necesitas tener instalados Python 3.11+ y Node.js.*
+
+**1. Levanta el Backend (Primera vez):**
+```bash
 cd backend
-# Crear y activar entorno virtual (solo la primera vez)
 python -m venv venv
+# Windows:
 .\venv\Scripts\activate
-# Instalar dependencias (solo la primera vez)
+# Instala y corre:
 pip install -r requirements.txt
-# Correr el servidor
 uvicorn main:app --reload
 ```
 
-**2. Levantar el Frontend:**
-Abre **otra** terminal y ejecuta:
-```powershell
+**2. Levanta el Frontend (Primera vez):**
+*Abre otra terminal nueva y haz esto:*
+```bash
 cd frontend
-npm install # (solo la primera vez)
+npm install
 npm run dev
 ```
-Luego abrí **`http://localhost:5173`** en tu navegador.
+**¡Listo!**: Entra a [http://localhost:5173](http://localhost:5173).
 
-### Opción 2: Usando Docker (Entorno Dev)
-Si preferís no instalar nada en tu computadora:
+### 🔄 **Las siguientes veces**:
+**1. Backend:**
+```bash
+cd backend
 
-```powershell
-# Levantar usando el archivo de desarrollo
-docker compose -f docker-compose.dev.yml up
+# Windows
+.\venv\Scripts\activate
+
+uvicorn main:app --reload
 ```
-Luego abrí **`http://localhost:5173`** en tu navegador.
+
+**2. Frontend:**
+*Abre otra terminal nueva y haz esto:*
+```bash
+cd frontend
+npm run dev
+```
+
+**Roooty estará listo en**: [http://localhost:5173](http://localhost:5173).
 
 ---
 
-## 🛑 Comandos útiles
+## 🏗️ Arquitectura del Sistema
 
-```powershell
-# Levantar en segundo plano (sin bloquear la terminal)
-docker compose up --build -d
-
-# Ver logs en tiempo real
-docker compose logs -f
-
-# Detener todo
-docker compose down
-
-# Detener y borrar datos/caché
-docker compose down --volumes --rmi all
-```
-
----
-
-## 🏗️ Arquitectura de los contenedores
-
-```
-Tu navegador (http://localhost)
-        │
-        ▼
-┌──────────────────┐
-│  roooty_frontend │  nginx  :80
-│  (React + nginx) │
-└────────┬─────────┘
-         │  /api/* → proxy interno
-         ▼
-┌──────────────────┐
-│  roooty_backend  │  FastAPI  :8000
-│  (Python 3.11)   │
-└──────────────────┘
-```
-
-- El **frontend** sirve la app React y redirige las llamadas `/api/` al backend automáticamente.
-- El **backend** expone todos los métodos numéricos como endpoints REST.
-- No necesitás configurar CORS ni puertos adicionales.
-
----
-
-## 🔧 Variables y configuración
-
-No hay variables de entorno requeridas. Si necesitás cambiar puertos, editá `docker-compose.yml`:
-
-```yaml
-ports:
-  - "3000:80"   # Cambiá 3000 por el puerto que quieras para el frontend
-  - "8080:8000" # Cambiá 8080 por el puerto que quieras para el backend
+```mermaid
+graph TD
+    User((Usuario)) -->|Navegador| FE[Frontend - React/Vite]
+    FE -->|API Requests| BE[Backend - FastAPI]
+    BE -->|Cálculos| Sympy[SymPy / NumPy]
+    BE -->|Respuesta JSON| FE
 ```
 
 ---
 
-## 📁 Estructura del proyecto
+## 📂 Estructura del Proyecto
 
-```
-roooty/
-├── docker-compose.yml
-├── backend/
-│   ├── Dockerfile
-│   ├── main.py          ← API FastAPI (todos los métodos numéricos)
-│   └── requirements.txt
-└── frontend/
-    ├── Dockerfile
-    ├── nginx.conf        ← Config del servidor web + proxy
-    ├── src/
-    │   ├── pages/        ← Bisección, Newton, Secante, etc.
-    │   ├── components/   ← Sidebar, Chart, Settings
-    │   └── App.jsx
-    └── package.json
-```
+*   `backend/`: Lógica matemática, API REST y algoritmos numéricos.
+*   `frontend/`: Interfaz de usuario, gráficos y componentes React.
+*   `docker-compose.yml`: Configuración mágica para que todo funcione con un clic.
+
 
 ---
 
-## ❓ Problemas comunes
-
-**El puerto 80 ya está ocupado**
-```powershell
-# Buscá qué proceso usa el puerto 80
-netstat -ano | findstr :80
-
-# O simplemente cambiá el puerto en docker-compose.yml:
-# "3000:80"  →  abrí http://localhost:3000
-```
-
-**Docker Desktop no inicia**
-- Asegurate de tener virtualización habilitada en la BIOS.
-- En Windows 11/10, activá "Hyper-V" y "Plataforma de máquina virtual" en Características de Windows.
-
-**El build falla por falta de memoria**
-- Entrá a Docker Desktop → Settings → Resources → aumentá la RAM a 4GB+.
-
----
-
-## 👥 El Escuadrón
-
-Bautista · Ignacio · Juan · Trini · Brisa · Micaías · Manuel
+<p align="center">Hecho con ❤️ para la cátedra de Análisis Numérico.</p>
