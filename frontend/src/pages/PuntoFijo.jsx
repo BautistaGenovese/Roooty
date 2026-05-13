@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useSettings } from '../hooks/useSettings'
 import { apiPost, buildPayload } from '../utils/api'
 import Latex from '../components/Latex'
-import MethodLayout, { Expander, FormulaInput, PrecisionSlider, EmptyPanel, ResultsPanel, PdfButton, VSCodeBlock } from '../components/MethodLayout'
+import MethodLayout, { Expander, FormulaInput, PrecisionSlider, EmptyPanel, ResultsPanel, PdfButton, VSCodeBlock, CompareButton } from '../components/MethodLayout'
 
 const COLS = [
   { key: 'x', label: 'x[i]' }, { key: 'gx', label: 'g(x[i])' }, { key: 'error', label: 'Error' },
@@ -43,7 +43,7 @@ export default function PuntoFijo() {
   }
 
   const teoria = (
-    <Expander title="📖 ¿Cómo funciona el método de Punto Fijo?">
+    <Expander title="¿Cómo funciona el método de Punto Fijo?">
       <p>
         <strong>Concepto básico:</strong> Transforma <Latex tex="f(x) = 0" /> en <Latex tex="x = g(x)" />. Se toma un valor inicial, se evalúa en <Latex tex="g(x)" />,
         y el resultado se convierte en la entrada para la siguiente iteración.
@@ -53,7 +53,7 @@ export default function PuntoFijo() {
       <Latex tex={String.raw`x_{i+1} = g(x_i)`} display />
       <br />
       <div className="alert alert-info">
-        💡 <strong>Criterio de Convergencia:</strong> <Latex tex="|g'(x)| < 1" /> cerca de la raíz.
+        <strong>Criterio de Convergencia:</strong> <Latex tex="|g'(x)| < 1" /> cerca de la raíz.
       </div>
     </Expander>
   )
@@ -94,7 +94,12 @@ export default function PuntoFijo() {
       </div>
       <PrecisionSlider value={prec} onChange={setPrec} />
       {error && <div className="alert alert-error">{error}</div>}
-      {result && <PdfButton title="Punto Fijo" f={formula} params={{ 'x0': x0, 'Tolerancia': `1e-${prec}` }} result={result} columns={COLS} />}
+      {result && (
+        <>
+          <PdfButton title="Punto Fijo" f={formula} params={{ 'x0': x0, 'Tolerancia': `1e-${prec}` }} result={result} columns={COLS} />
+          <CompareButton f={formula} prec={prec} metA="Punto Fijo" paramsA={{ x_0: x0 }} />
+        </>
+      )}
     </>
   )
 

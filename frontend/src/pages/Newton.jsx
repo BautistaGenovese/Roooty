@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useSettings } from '../hooks/useSettings'
 import { apiPost, buildPayload } from '../utils/api'
 import Latex from '../components/Latex'
-import MethodLayout, { Expander, FormulaInput, PrecisionSlider, EmptyPanel, ResultsPanel, PdfButton, VSCodeBlock } from '../components/MethodLayout'
+import MethodLayout, { Expander, FormulaInput, PrecisionSlider, EmptyPanel, ResultsPanel, PdfButton, VSCodeBlock, CompareButton } from '../components/MethodLayout'
 
 const COLS = [
   { key: 'x', label: 'x[i]' }, { key: 'fx', label: "f(x[i])" },
@@ -41,7 +41,7 @@ export default function Newton() {
   }
 
   const teoria = (
-    <Expander title="📖 ¿Cómo funciona el método de Newton-Raphson?">
+    <Expander title="¿Cómo funciona el método de Newton-Raphson?">
       <p>
         <strong>Concepto básico:</strong> Comienza en un punto inicial <Latex tex="x_0" /> y traza una línea <strong>tangente</strong> a la curva usando la derivada.
         La intersección de esa tangente con el eje X da el siguiente punto <Latex tex="x_1" />.
@@ -51,7 +51,7 @@ export default function Newton() {
       <Latex tex={String.raw`x_{i+1} = x_i - \dfrac{f(x_i)}{f'(x_i)}`} display />
       <br />
       <div className="alert alert-warning">
-        ⚠️ <strong>Restricción:</strong> <Latex tex="f'(x_i) \neq 0" />, ya que la tangente horizontal nunca cruza el eje X.
+        <strong>Restricción:</strong> <Latex tex="f'(x_i) \neq 0" />, ya que la tangente horizontal nunca cruza el eje X.
       </div>
     </Expander>
   )
@@ -65,7 +65,12 @@ export default function Newton() {
       </div>
       <PrecisionSlider value={prec} onChange={setPrec} />
       {error && <div className="alert alert-error">{error}</div>}
-      {result && <PdfButton title="Newton-Raphson" f={f} params={{ 'x0': x0, 'Tolerancia': `1e-${prec}` }} result={result} columns={COLS} />}
+      {result && (
+        <>
+          <PdfButton title="Newton-Raphson" f={f} params={{ 'x0': x0, 'Tolerancia': `1e-${prec}` }} result={result} columns={COLS} />
+          <CompareButton f={f} prec={prec} metA="Newton" paramsA={{ x_0: x0 }} />
+        </>
+      )}
     </>
   )
 

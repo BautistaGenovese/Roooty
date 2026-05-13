@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useSettings } from '../hooks/useSettings'
 import { apiPost, buildPayload } from '../utils/api'
 import Latex from '../components/Latex'
-import MethodLayout, { Expander, FormulaInput, PrecisionSlider, EmptyPanel, ResultsPanel, PdfButton, VSCodeBlock } from '../components/MethodLayout'
+import MethodLayout, { Expander, FormulaInput, PrecisionSlider, EmptyPanel, ResultsPanel, PdfButton, VSCodeBlock, CompareButton } from '../components/MethodLayout'
 
 const COLS = [
   { key: 'a', label: 'a[i]' }, { key: 'b', label: 'b[i]' },
@@ -44,7 +44,7 @@ export default function Biseccion() {
   }
 
   const teoria = (
-    <Expander title="📖 ¿Cómo funciona el método de Bisección?">
+    <Expander title="¿Cómo funciona el método de Bisección?">
       <p>
         <strong>Concepto básico:</strong> Es un método de búsqueda cerrada que se basa en el <strong>Teorema del Valor Intermedio</strong>.
         Divide repetidamente a la mitad un intervalo conocido que contiene la raíz.
@@ -54,7 +54,7 @@ export default function Biseccion() {
       <Latex tex={String.raw`x_i = \dfrac{a + b}{2}`} display />
       <br />
       <div className="alert alert-info">
-        💡 <strong>Condición de Cambio de Signo:</strong> Obligatoriamente, <Latex tex="f(a) \cdot f(b) < 0" />.
+        <strong>Condición de Cambio de Signo:</strong> Obligatoriamente, <Latex tex="f(a) \cdot f(b) < 0" />.
       </div>
     </Expander>
   )
@@ -74,7 +74,12 @@ export default function Biseccion() {
       </div>
       <PrecisionSlider value={prec} onChange={setPrec} />
       {error && <div className="alert alert-error">{error}</div>}
-      {result && <PdfButton title="Bisección" f={f} params={{ 'Límite a': a, 'Límite b': b, 'Tolerancia': `1e-${prec}` }} result={result} columns={COLS} />}
+      {result && (
+        <>
+          <PdfButton title="Bisección" f={f} params={{ 'Límite a': a, 'Límite b': b, 'Tolerancia': `1e-${prec}` }} result={result} columns={COLS} />
+          <CompareButton f={f} prec={prec} metA="Bisección" paramsA={{ a, b }} />
+        </>
+      )}
     </>
   )
 

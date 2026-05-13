@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
-  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis
+  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
+  BarChart, Bar, Cell
 } from 'recharts';
 
 // --- FUNCIONES AUXILIARES ORIGINALES ---
@@ -408,8 +409,12 @@ export function ErrorChart({ histIzq, histDer, nameIzq, nameDer }) {
         <CartesianGrid {...gridStyle} />
         <XAxis dataKey="iter" tick={axisStyle} tickLine={false} label={{ value: 'Iteración', position: 'insideBottom', offset: -12, fontSize: 11, fill: '#64748b' }} />
         <YAxis scale="log" domain={['auto', 'auto']} tickFormatter={v => v.toExponential(0)} tick={axisStyle} tickLine={false} width={60} />
-        <RechartsTooltip formatter={(v, name) => [v?.toExponential(4), name]} contentStyle={{ borderRadius: 8 }} />
-        <Legend wrapperStyle={{ fontSize: 12 }} />
+        <RechartsTooltip 
+          formatter={(v, name) => [v?.toExponential(4), name]} 
+          contentStyle={{ background: 'var(--sidebar-bg)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--navy-dark)' }} 
+          itemStyle={{ color: 'var(--navy-dark)' }}
+        />
+        <Legend verticalAlign="top" wrapperStyle={{ fontSize: 12, paddingBottom: 10 }} />
         <Line dataKey={nameIzq} stroke="#3b82f6" strokeWidth={2.5} dot={{ r: 3 }} connectNulls={false} name={`Método A: ${nameIzq}`} />
         <Line dataKey={nameDer} stroke="#8b5cf6" strokeWidth={2.5} strokeDasharray="5 5" dot={{ r: 3 }} connectNulls={false} name={`Método B: ${nameDer}`} />
       </LineChart>
@@ -424,13 +429,59 @@ export function RadarChart2({ nameIzq, scoresIzq, nameDer, scoresDer }) {
     <ResponsiveContainer width="100%" height={320}>
       <RadarChart data={data} margin={{ top: 16, right: 32, bottom: 16, left: 32 }}>
         <PolarGrid stroke="rgba(200,200,200,0.4)" />
-        <PolarAngleAxis dataKey="cat" tick={{ fontSize: 11, fill: '#0f172a' }} />
+        <PolarAngleAxis dataKey="cat" tick={{ fontSize: 11, fill: 'var(--navy-dark)' }} />
         <PolarRadiusAxis angle={90} domain={[0, 10]} tick={{ fontSize: 10, fill: '#64748b' }} tickCount={4} />
         <Radar name={nameIzq} dataKey={nameIzq} stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.25} strokeWidth={2.5} />
         <Radar name={nameDer} dataKey={nameDer} stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.2} strokeWidth={2.5} strokeDasharray="5 5" />
         <Legend wrapperStyle={{ fontSize: 12 }} />
-        <RechartsTooltip contentStyle={{ borderRadius: 8 }} />
+        <RechartsTooltip 
+          contentStyle={{ background: 'var(--sidebar-bg)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--navy-dark)' }} 
+          itemStyle={{ color: 'var(--navy-dark)' }}
+        />
       </RadarChart>
     </ResponsiveContainer>
   );
 }
+export function ComparisonBarChart({ nameA, valA, nameB, valB, isTime = false }) {
+  const data = [
+    { name: nameA, value: valA, color: '#3b82f6' },
+    { name: nameB, value: valB, color: '#8b5cf6' }
+  ];
+
+  return (
+    <ResponsiveContainer width="100%" height={180}>
+      <BarChart data={data} margin={{ top: 25, right: 30, left: 10, bottom: 5 }}>
+        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(200,200,200,0.2)" />
+        <XAxis 
+          dataKey="name" 
+          tick={{ fontSize: 10, fontWeight: 700, fill: 'var(--slate)' }}
+          axisLine={false}
+          tickLine={false}
+        />
+        <YAxis hide />
+        <RechartsTooltip 
+          cursor={{ fill: 'rgba(200,200,200,0.05)' }}
+          contentStyle={{ background: 'var(--sidebar-bg)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--navy-dark)' }}
+          itemStyle={{ color: 'var(--navy-dark)' }}
+        />
+        <Bar 
+          dataKey="value" 
+          radius={[4, 4, 0, 0]} 
+          barSize={40} 
+          label={{ 
+            position: 'top', 
+            fill: 'var(--navy-dark)', 
+            fontSize: 11, 
+            fontWeight: 800, 
+            formatter: v => isTime ? v.toFixed(3) : v 
+          }}
+        >
+          {data.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={entry.color} />
+          ))}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+

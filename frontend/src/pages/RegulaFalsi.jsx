@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useSettings } from '../hooks/useSettings'
 import { apiPost, buildPayload } from '../utils/api'
 import Latex from '../components/Latex'
-import MethodLayout, { Expander, FormulaInput, PrecisionSlider, EmptyPanel, ResultsPanel, PdfButton, VSCodeBlock } from '../components/MethodLayout'
+import MethodLayout, { Expander, FormulaInput, PrecisionSlider, EmptyPanel, ResultsPanel, PdfButton, VSCodeBlock, CompareButton } from '../components/MethodLayout'
 
 const COLS = [
   { key: 'a', label: 'a[i]' }, { key: 'b', label: 'b[i]' },
@@ -44,7 +44,7 @@ export default function RegulaFalsi() {
   }
 
   const teoria = (
-    <Expander title="📖 ¿Cómo funciona el método de Regula Falsi (Falsa Posición)?">
+    <Expander title="¿Cómo funciona el método de Regula Falsi (Falsa Posición)?">
       <p>
         <strong>Concepto básico:</strong> Combina la seguridad de la Bisección con una aproximación más inteligente.
         Traza una línea recta entre <Latex tex="(a, f(a))" /> y <Latex tex="(b, f(b))" />, y la intersección con el eje X es la nueva aproximación.
@@ -54,7 +54,7 @@ export default function RegulaFalsi() {
       <Latex tex={String.raw`x = b - \dfrac{f(b) \cdot (b - a)}{f(b) - f(a)}`} display />
       <br />
       <div className="alert alert-warning">
-        ⚠️ <strong>Restricción:</strong> <Latex tex="f(a) \neq f(b)" /> para evitar división por cero.
+        <strong>Restricción:</strong> <Latex tex="f(a) \neq f(b)" /> para evitar división por cero.
       </div>
     </Expander>
   )
@@ -74,7 +74,12 @@ export default function RegulaFalsi() {
       </div>
       <PrecisionSlider value={prec} onChange={setPrec} />
       {error && <div className="alert alert-error">{error}</div>}
-      {result && <PdfButton title="Regula Falsi" f={f} params={{ 'Límite a': a, 'Límite b': b, 'Tolerancia': `1e-${prec}` }} result={result} columns={COLS} />}
+      {result && (
+        <>
+          <PdfButton title="Regula Falsi" f={f} params={{ 'Límite a': a, 'Límite b': b, 'Tolerancia': `1e-${prec}` }} result={result} columns={COLS} />
+          <CompareButton f={f} prec={prec} metA="Regula Falsi" paramsA={{ a, b }} />
+        </>
+      )}
     </>
   )
 

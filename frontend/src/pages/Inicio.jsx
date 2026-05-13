@@ -147,7 +147,7 @@ export default function Inicio() {
 
       {/* GUÍA DE MÉTODOS */}
       <h2 style={{ textAlign: 'center', color: 'var(--navy)', fontWeight: 800, marginBottom: 8 }}>
-        🎛️ ¿Qué método usar?
+        ¿Qué método usar?
       </h2>
       <p style={{ textAlign: 'center', color: 'var(--slate)', marginBottom: '2rem' }}>
         No todos los métodos son iguales. Elegí el correcto según tu función y contexto.
@@ -159,12 +159,12 @@ export default function Inicio() {
         <Link to="/biseccion" style={{ textDecoration: 'none' }}>
           <div className="method-guide-card">
             <div className="method-guide-header">
-              <strong>📉 Bisección</strong>
+              <strong>Bisección</strong>
               <span className="badge">Garantiza convergencia</span>
             </div>
             <p className="method-guide-desc">Divide el intervalo a la mitad en cada paso. Lento pero <strong>siempre converge</strong> si hay un cambio de signo.</p>
             <div className="method-guide-when">
-              <span className="method-when-label">✅ Ideal cuando:</span>
+              <span className="method-when-label">Ideal cuando:</span>
               <ul>
                 <li>La función es continua pero complicada de derivar</li>
                 <li>Necesitás una respuesta garantizada sin importar la velocidad</li>
@@ -172,7 +172,7 @@ export default function Inicio() {
               </ul>
             </div>
             <div className="method-guide-example">
-              <span className="method-ex-label">📌 Ejemplo típico:</span>
+              <span className="method-ex-label">Ejemplo típico:</span>
               <code>f(x) = x³ - x - 2</code> en <code>[1, 2]</code>
               <button
                 className="try-example-btn"
@@ -185,7 +185,7 @@ export default function Inicio() {
         <Link to="/regula-falsi" style={{ textDecoration: 'none' }}>
           <div className="method-guide-card">
             <div className="method-guide-header">
-              <strong>📐 Regula Falsi</strong>
+              <strong>Regula Falsi</strong>
               <span className="badge">Más rápido que Bisección</span>
             </div>
             <p className="method-guide-desc">Usa una línea secante en vez de la mitad exacta. Converge más rápido que bisección, pero puede ser lento en algunos casos.</p>
@@ -210,13 +210,13 @@ export default function Inicio() {
       </div>
 
       {/* OPEN METHODS */}
-      <p className="sidebar-section-label" style={{ marginBottom: '1rem' }}>⚡ MÉTODOS ABIERTOS — Solo necesitan un punto inicial, convergen más rápido</p>
+      <p className="sidebar-section-label" style={{ marginBottom: '1rem' }}>🔓 MÉTODOS ABIERTOS — Solo necesitan un punto inicial, convergen más rápido</p>
       <div className="methods-grid" style={{ marginBottom: '2rem' }}>
         <Link to="/newton" style={{ textDecoration: 'none' }}>
-          <div className="method-guide-card method-guide-card--highlight">
+          <div className="method-guide-card">
             <div className="method-guide-header">
-              <strong>🎢 Newton-Raphson</strong>
-              <span className="badge badge-purple">Convergencia cuadrática</span>
+              <strong>Newton-Raphson</strong>
+              <span className="badge">Convergencia cuadrática</span>
             </div>
             <p className="method-guide-desc">Usa la derivada para aproximarse a la raíz en muy pocas iteraciones. El más <strong>rápido de todos</strong>, cuando converge.</p>
             <div className="method-guide-when">
@@ -241,7 +241,7 @@ export default function Inicio() {
         <Link to="/secante" style={{ textDecoration: 'none' }}>
           <div className="method-guide-card">
             <div className="method-guide-header">
-              <strong>🎯 Secante</strong>
+              <strong>Secante</strong>
               <span className="badge">Sin derivada analítica</span>
             </div>
             <p className="method-guide-desc">Variante de Newton que usa dos puntos para aproximar la derivada. Casi tan rápido, pero sin necesitar derivar.</p>
@@ -267,7 +267,7 @@ export default function Inicio() {
         <Link to="/punto-fijo" style={{ textDecoration: 'none' }}>
           <div className="method-guide-card">
             <div className="method-guide-header">
-              <strong>📍 Punto Fijo</strong>
+              <strong>Punto Fijo</strong>
               <span className="badge">Convergencia condicional</span>
             </div>
             <p className="method-guide-desc">Reformula f(x)=0 como x=g(x) e itera. Converge solo si |g'(x)| &lt; 1 cerca de la raíz.</p>
@@ -292,13 +292,13 @@ export default function Inicio() {
       </div>
 
       {/* TOOLS */}
-      <p className="sidebar-section-label" style={{ marginBottom: '1rem' }}>🔧 HERRAMIENTAS</p>
+      <p className="sidebar-section-label" style={{ marginBottom: '1rem' }}>HERRAMIENTAS</p>
       <div className="methods-grid" style={{ marginBottom: '2rem' }}>
         <Link to="/regresion" style={{ textDecoration: 'none' }}>
-          <div className="method-guide-card">
+          <div className="method-guide-card method-guide-card--highlight">
             <div className="method-guide-header">
-              <strong>📊 Regresión Lineal</strong>
-              <span className="badge">Modelado de datos</span>
+              <strong>Regresión Lineal</strong>
+              <span className="badge badge-purple">Modelado de datos</span>
             </div>
             <p className="method-guide-desc">Ajusta una línea a un conjunto de datos usando mínimos cuadrados. Calcula pendiente, ordenada y R².</p>
             <div className="method-guide-when">
@@ -319,7 +319,7 @@ export default function Inicio() {
         <Link to="/comparacion" style={{ textDecoration: 'none' }}>
           <div className="method-guide-card" style={{ borderStyle: 'dashed', borderColor: 'var(--blue)' }}>
             <div className="method-guide-header">
-              <strong style={{ color: 'var(--blue)' }}>⚔️ Comparación de Métodos</strong>
+              <strong style={{ color: 'var(--blue)' }}>Comparación de Métodos</strong>
               <span className="badge">Multi-método</span>
             </div>
             <p className="method-guide-desc">Ejecuta múltiples métodos sobre la misma función y compará iteraciones, error y velocidad de convergencia en paralelo.</p>
@@ -345,21 +345,21 @@ export default function Inicio() {
 
       {/* EQUIPO */}
       <h3 style={{ textAlign: 'center', color: 'var(--navy)', marginBottom: 8 }}>
-        👥 El Escuadrón detrás del Código
+        El Equipo detrás del Código
       </h3>
       <p style={{ textAlign: 'center', color: 'var(--slate)', marginBottom: '1.5rem', maxWidth: '700px', margin: '0 auto 1.5rem auto', lineHeight: '1.6' }}>
-        El desarrollo de esta plataforma ha sido impulsado por un equipo comprometido con la excelencia académica y la precisión algorítmica:
+        El desarrollo de esta plataforma ha sido impulsado por un grupo de estudiantes comprometidos con la excelencia académica y la precisión algorítmica:
       </p>
 
       <div className="escuadron">
         {[
-          { initials: 'BG', name: 'Bautista', bg: 'var(--bg)', color: 'var(--font-main)', isLead: true },
+          { initials: 'BG', name: 'Bauti', bg: 'var(--bg)', color: 'var(--font-main)', isLead: true },
           { initials: 'IG', name: 'Ignacio', bg: '#e0f2fe', color: '#0284c7' },
           { initials: 'JG', name: 'Juan', bg: '#f3e8ff', color: '#9333ea' },
-          { initials: 'TK', name: 'Trini', bg: '#ffedd5', color: '#ea580c' },
+          { initials: 'TK', name: 'Trinii', bg: '#ffedd5', color: '#ea580c' },
           { initials: 'BR', name: 'Brisa', bg: '#dcfce7', color: '#16a34a' },
-          { initials: 'MV', name: 'Micaías', bg: '#f1f5f9', color: '#475569' },
-          { initials: 'MM', name: 'Manuel', bg: '#fef9c3', color: '#ca8a04' },
+          { initials: 'MV', name: 'Mica', bg: '#f1f5f9', color: '#475569' },
+          { initials: 'MM', name: 'Manu', bg: '#fef9c3', color: '#ca8a04' },
         ].map(({ initials, name, bg, color, isLead }) => (
           <div key={name} className="integrante">
             <div className={`avatar ${isLead ? 'lead-dev' : ''}`} style={{ background: bg, color }}>{initials}</div>
@@ -371,7 +371,7 @@ export default function Inicio() {
       <br /><br />
 
       <div className="alert alert-error">
-        💡 <strong>TIP DE SUPERVIVENCIA</strong><br />
+        <strong>TIP DE SUPERVIVENCIA</strong><br />
         Recuerda que los métodos abiertos no garantizan la convergencia. Si la app te dice que el método divergió, no te asustes: intenta cambiar tu valor inicial o revisa la Configuración Global.
       </div>
     </div>

@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useSettings } from '../hooks/useSettings'
 import { apiPost, buildPayload } from '../utils/api'
 import Latex from '../components/Latex'
-import MethodLayout, { Expander, FormulaInput, PrecisionSlider, EmptyPanel, ResultsPanel, PdfButton, VSCodeBlock } from '../components/MethodLayout'
+import MethodLayout, { Expander, FormulaInput, PrecisionSlider, EmptyPanel, ResultsPanel, PdfButton, VSCodeBlock, CompareButton } from '../components/MethodLayout'
 
 const COLS = [
   { key: 'x', label: 'x[i]' }, { key: 'fx', label: 'f(x[i])' },
@@ -44,7 +44,7 @@ export default function Secante() {
   }
 
   const teoria = (
-    <Expander title="📖 ¿Cómo funciona el método de la Secante?">
+    <Expander title="¿Cómo funciona el método de la Secante?">
       <p>
         <strong>Concepto básico:</strong> Aproxima la derivada trazando una recta <strong>secante</strong> entre los dos últimos puntos evaluados,
         sin necesidad de calcular la derivada analíticamente.
@@ -54,7 +54,7 @@ export default function Secante() {
       <Latex tex={String.raw`x_{i+1} = x_i - f(x_i) \cdot \dfrac{x_{i-1} - x_i}{f(x_{i-1}) - f(x_i)}`} display />
       <br />
       <div className="alert alert-warning">
-        ⚠️ <strong>Restricción:</strong> <Latex tex="f(x_{i-1}) \neq f(x_i)" /> para evitar división por cero.
+        <strong>Restricción:</strong> <Latex tex="f(x_{i-1}) \neq f(x_i)" /> para evitar división por cero.
       </div>
     </Expander>
   )
@@ -74,7 +74,12 @@ export default function Secante() {
       </div>
       <PrecisionSlider value={prec} onChange={setPrec} />
       {error && <div className="alert alert-error">{error}</div>}
-      {result && <PdfButton title="Secante" f={f} params={{ 'xₙ': xn, 'xₙ₊₁': xn1, 'Tolerancia': `1e-${prec}` }} result={result} columns={COLS} />}
+      {result && (
+        <>
+          <PdfButton title="Secante" f={f} params={{ 'xₙ': xn, 'xₙ₊₁': xn1, 'Tolerancia': `1e-${prec}` }} result={result} columns={COLS} />
+          <CompareButton f={f} prec={prec} metA="Secante" paramsA={{ x_n: xn, x_n1: xn1 }} />
+        </>
+      )}
     </>
   )
 

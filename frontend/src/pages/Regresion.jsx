@@ -47,7 +47,7 @@ export default function Regresion() {
   }
 
   const teoria = (
-    <Expander title="📖 ¿Cómo funciona la Regresión Lineal?">
+    <Expander title="¿Cómo funciona la Regresión Lineal?">
       <p>
         <strong>Concepto básico:</strong> Modela la relación entre un conjunto de datos buscando la <strong>recta de mejor ajuste</strong> que minimiza la distancia vertical al cuadrado entre los puntos y la recta.
       </p>
@@ -56,7 +56,7 @@ export default function Regresion() {
       <Latex tex={String.raw`f(x) = mx + b`} display />
       <br />
       <div className="alert alert-info">
-        💡 La raíz se obtiene despejando: <Latex tex="x = -\dfrac{b}{m}" /> (siempre que <Latex tex="m \neq 0" />).
+        La raíz se obtiene despejando: <Latex tex="x = -\dfrac{b}{m}" /> (siempre que <Latex tex="m \neq 0" />).
       </div>
     </Expander>
   )
@@ -66,7 +66,7 @@ export default function Regresion() {
       <div className="form-group">
         <label className="form-label">Tabla de puntos</label>
         <div className="alert alert-info" style={{ marginBottom: 10, fontSize: '0.82rem' }}>
-          💡 Edita la tabla e ingresa al menos 2 pares (x, y).
+          Edita la tabla e ingresa al menos 2 pares (x, y).
         </div>
         <div className="table-wrap" style={{ marginBottom: 8 }}>
           <table>

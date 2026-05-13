@@ -4,12 +4,14 @@ const SettingsContext = createContext(null)
 
 const getDefaultSettings = () => {
   const saved = localStorage.getItem('rooty-settings')
+  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+
   if (saved) {
     try {
       const parsed = JSON.parse(saved)
-      if (typeof parsed.darkMode !== 'boolean') parsed.darkMode = false
+      if (typeof parsed.darkMode !== 'boolean') parsed.darkMode = systemPrefersDark
       return parsed
-    } catch(e) {}
+    } catch (e) { }
   }
   return {
     trigMode: 'Radianes',
@@ -17,7 +19,7 @@ const getDefaultSettings = () => {
     maxIters: 100,
     ceroMaquina: 1e-12,
     limiteInfinito: 1e6,
-    darkMode: false,
+    darkMode: systemPrefersDark,
   }
 }
 
@@ -34,14 +36,14 @@ export function SettingsProvider({ children }) {
   }, [settings])
 
   const update = (key, val) => setSettings(s => ({ ...s, [key]: val }))
-  const reset = () => setSettings({
+  const reset = () => setSettings(s => ({
     trigMode: 'Radianes',
     tipoError: 'Absoluto',
     maxIters: 100,
     ceroMaquina: 1e-12,
     limiteInfinito: 1e6,
-    darkMode: false,
-  })
+    darkMode: s.darkMode,
+  }))
 
   return (
     <SettingsContext.Provider value={{ settings, update, reset }}>

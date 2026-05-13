@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Chart from './Chart'
 import { fetchChartData } from '../utils/api'
 import { useSettings } from '../hooks/useSettings'
@@ -206,7 +207,7 @@ export function FormulaInput({ value, onChange, placeholder = 'Ejemplo: x**2 + 1
 export function EmptyPanel() {
   return (
     <div className="empty-panel">
-      <div className="empty-panel-icon">📊</div>
+      <div className="empty-panel-icon"></div>
       <h2>Panel de Resultados</h2>
       <p>Ingresa una función y presiona el botón para visualizar el análisis.</p>
       <div className="empty-panel-badge">ROOOTY ESTÁ LISTO PARA CALCULAR</div>
@@ -339,7 +340,7 @@ export function PdfButton({ title, f, params, result, columns }) {
   return (
     <div style={{ marginTop: '1rem' }}>
       <button className="btn btn-secondary" onClick={handleGenerate} disabled={isGenerating}>
-        {isGenerating ? '⏳ Generando reporte...' : '📝 Generar reporte en PDF'}
+        {isGenerating ? 'Generando reporte...' : 'Generar reporte en PDF'}
       </button>
     </div>
   )
@@ -433,7 +434,7 @@ export default function MethodLayout({ title, badge, teoria, inputs, onCalcular,
 
           <div style={{ paddingTop: '1.5rem' }}>
             <button className="btn btn-primary no-pdf" onClick={onCalcular}>
-              🚀 Calcular y Graficar
+              Calcular y Graficar
             </button>
           </div>
         </div>
@@ -451,7 +452,7 @@ export default function MethodLayout({ title, badge, teoria, inputs, onCalcular,
         <div className="no-pdf" style={{ marginTop: '1.5rem' }}>
           <Expander
             className="expander--table"
-            title="📊 Ver tabla de iteraciones"
+            title="Ver tabla de iteraciones"
             badge={`${iteraciones.length} PASOS`}
           >
             <IterTable rows={iteraciones} columns={columns} />
@@ -473,5 +474,44 @@ export default function MethodLayout({ title, badge, teoria, inputs, onCalcular,
         </div>
       )}
     </div>
+  )
+}
+export function CompareButton({ f, prec, metA, paramsA }) {
+  const navigate = useNavigate()
+  const handleCompare = () => {
+    const q = new URLSearchParams()
+    q.set('f', f)
+    q.set('prec', prec)
+    q.set('metA', metA)
+    if (paramsA) {
+      Object.entries(paramsA).forEach(([k, v]) => q.set(k, v))
+    }
+    navigate(`/comparacion?${q.toString()}`)
+  }
+
+  return (
+    <button 
+      className="btn btn-secondary" 
+      onClick={handleCompare}
+      style={{ 
+        width: '100%', 
+        marginTop: '1rem', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        gap: '8px',
+        fontWeight: 700,
+        fontSize: '0.85rem'
+      }}
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="16 3 21 3 21 8"></polyline>
+        <line x1="4" y1="20" x2="21" y2="3"></line>
+        <polyline points="21 16 21 21 16 21"></polyline>
+        <line x1="15" y1="15" x2="21" y2="21"></line>
+        <line x1="4" y1="4" x2="9" y2="9"></line>
+      </svg>
+      Comparar con otro método
+    </button>
   )
 }
