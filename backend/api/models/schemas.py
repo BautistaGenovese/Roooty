@@ -63,3 +63,12 @@ class IntegracionRequest(BaseModel):
     b: float
     n: int = 100
     trig_mode: str = "Radianes"
+
+
+class ODERequest(BaseModel):
+    f: str
+    x0: float
+    y0: float
+    h: float
+    n: int
+    trig_mode: str = "rad"
