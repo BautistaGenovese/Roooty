@@ -1,17 +1,222 @@
-import React from "react";
-import MethodLayout from "../../components/MethodLayout";
+/**
+ * Página: Regla del Trapecio
+ *
+ * Usa IntegralChart para mostrar el gráfico SVG nativo con:
+ *  - Relleno sombreado del área aproximada
+ *  - Línea de trapecios (naranja)
+ *  - Curva f(x) real (azul)
+ *  - Nodos x_i evaluados (verde)
+ */
 
-const Trapecio = () => {
+import { useState } from 'react'
+import { useSettings } from '../../hooks/useSettings'
+import { apiPost } from '../../utils/api'
+import Latex from '../../components/Latex'
+import MethodLayout, {
+  Expander,
+  FormulaInput,
+  EmptyPanel,
+} from '../../components/MethodLayout'
+import IntegralChart from './IntegralChart'
+
+// ── Columnas de la tabla de puntos ──────────────────────────────────────────
+const COLS = [
+  { key: 'x',  label: 'xᵢ'    },
+  { key: 'fx', label: 'f(xᵢ)' },
+]
+
+// ── Panel de resultados ──────────────────────────────────────────────────────
+function IntegralResultPanel({ resultado }) {
+  const { integral, puntos, metodo, curva_f, aproximacion } = resultado
+
+  return (
+    <div>
+      {/* Encabezado */}
+      <div className="formula-display" style={{ textAlign: 'center', marginBottom: '8px' }}>
+        <span style={{
+          fontSize: '0.7rem', color: 'var(--slate)', fontWeight: 700,
+          letterSpacing: 1.2, display: 'block', opacity: 0.8,
+        }}>
+          RESULTADO DE LA INTEGRAL
+        </span>
+        <div style={{ color: 'var(--navy)', marginTop: '4px' }}>
+          <code style={{ fontFamily: 'var(--font-mono)', fontSize: '1rem', fontWeight: 700 }}>
+            {metodo}
+          </code>
+        </div>
+      </div>
+
+      {/* Métricas */}
+      <div className="metrics-bar">
+        <div className="metric-item" style={{ flex: 1 }}>
+          <div className="metric-label">∫ f(x) dx ≈</div>
+          <div className="metric-value" style={{ fontSize: '1.6rem' }}>
+            {Number(integral).toFixed(8)}
+          </div>
+        </div>
+        <div className="metric-divider" />
+        <div className="metric-item">
+          <div className="metric-label">Nodos evaluados</div>
+          <div className="metric-value">{puntos.length}</div>
+        </div>
+      </div>
+
+      {/* ── GRÁFICO ── */}
+      {curva_f && aproximacion && (
+        <div style={{ marginTop: '1.2rem', padding: '8px 0' }}>
+          <IntegralChart
+            curvaF={curva_f}
+            aproximacion={aproximacion}
+            nodos={puntos}
+            titulo="Trapecios"
+          />
+        </div>
+      )}
+
+      {/* Tabla de puntos */}
+      {puntos.length > 0 && (
+        <div style={{ marginTop: '1rem' }}>
+          <Expander
+            className="expander--table"
+            title="Ver tabla de nodos evaluados"
+            badge={`${puntos.length} PUNTOS`}
+          >
+            <div className="table-wrap" style={{ fontSize: '0.78rem' }}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>i</th>
+                    {COLS.map(c => <th key={c.key}>{c.label}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {puntos.map((row, i) => (
+                    <tr key={i}>
+                      <td>{i}</td>
+                      {COLS.map(c => (
+                        <td key={c.key}>
+                          {row[c.key] != null ? Number(row[c.key]).toFixed(8) : '—'}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Expander>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Componente principal ─────────────────────────────────────────────────────
+export default function Trapecio() {
+  const { settings } = useSettings()
+
+  const [f, setF]   = useState('')
+  const [a, setA]   = useState(0)
+  const [b, setB]   = useState(1)
+  const [n, setN]   = useState(10)
+
+  const [resultado, setResultado] = useState(null)
+  const [error, setError]         = useState(null)
+  const [loading, setLoading]     = useState(false)
+
+  async function calcular() {
+    if (!f.trim()) { setError('Ingresa una función f(x).'); return }
+    if (n <= 0)    { setError('El número de intervalos n debe ser mayor que 0.'); return }
+    if (a >= b)    { setError('El límite inferior a debe ser menor que b.'); return }
+    setLoading(true); setError(null)
+    try {
+      const data = await apiPost('integracion/trapecio', {
+        f, a: Number(a), b: Number(b), n: Number(n), trig_mode: settings.trigMode,
+      })
+      setResultado(data)
+    } catch (e) {
+      const detail = e.response?.data?.detail
+      setError(typeof detail === 'string' ? detail : 'Error al calcular. Verifica la función.')
+      setResultado(null)
+    } finally { setLoading(false) }
+  }
+
+  const teoria = (
+    <Expander title="¿Cómo funciona la Regla del Trapecio?">
+      <p>
+        <strong>Concepto:</strong> Aproxima el área bajo la curva dividiendo [a, b]
+        en <em>n</em> subintervalos iguales y reemplazando cada arco por un trapecio.
+      </p>
+      <br />
+      <p><strong>Espaciado:</strong></p>
+      <Latex tex={String.raw`h = \dfrac{b - a}{n}`} display />
+      <br />
+      <p><strong>Fórmula compuesta:</strong></p>
+      <Latex
+        tex={String.raw`\int_a^b f(x)\,dx \approx \frac{h}{2}\left[f(x_0) + 2\sum_{i=1}^{n-1}f(x_i) + f(x_n)\right]`}
+        display
+      />
+      <br />
+      <div className="alert alert-info">
+        <strong>Nota:</strong> No tiene restricción sobre <em>n</em>. Mayor <em>n</em> → mayor precisión.
+      </div>
+    </Expander>
+  )
+
+  const inputs = (
+    <>
+      <FormulaInput value={f} onChange={setF} placeholder="Ejemplo: x**2 + sin(x)" />
+      <div className="input-col-2">
+        <div className="form-group">
+          <label className="form-label">Límite inferior a</label>
+          <input className="form-number" type="number" value={a} step={0.5}
+            onChange={e => setA(parseFloat(e.target.value))} />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Límite superior b</label>
+          <input className="form-number" type="number" value={b} step={0.5}
+            onChange={e => setB(parseFloat(e.target.value))} />
+        </div>
+      </div>
+      <div className="form-group">
+        <label className="form-label">
+          Número de intervalos n
+          <span style={{ marginLeft: 6, fontSize: '0.75rem', color: 'var(--slate)' }}>
+            (cualquier entero &gt; 0)
+          </span>
+        </label>
+        <input className="form-number" type="number" min={1} step={1} value={n}
+          onChange={e => setN(parseInt(e.target.value))} />
+      </div>
+      {error && <div className="alert alert-error">{error}</div>}
+    </>
+  )
+
+  const codeRaw = `def trapecio(f, a, b, n):
+    h = (b - a) / n
+    xs = [a + i * h for i in range(n + 1)]
+    fxs = [f(x) for x in xs]
+
+    # Coeficientes: 1, 2, 2, ..., 2, 1
+    integral = (h / 2) * (fxs[0] + 2 * sum(fxs[1:-1]) + fxs[-1])
+    return integral
+
+# Ejemplo: ∫₀¹ x² dx = 1/3
+resultado = trapecio(lambda x: x**2, a=${a}, b=${b}, n=${n})
+print(f"Integral ≈ {resultado:.8f}")`
+
+  const resultPanel = resultado
+    ? <IntegralResultPanel resultado={resultado} />
+    : <EmptyPanel />
+
   return (
     <MethodLayout
       title="Regla del Trapecio"
-      endpoint="/api/integracion/trapecio"
-      description="Método de integración numérica basado en aproximar la región bajo la gráfica de la función como un trapecio."
-      requiresInterval={true}
-      requiresN={true}
-      // TODO: Personaliza el MethodLayout si es necesario para agregar inputs extra
+      badge="INTEGRACIÓN NUMÉRICA"
+      teoria={teoria}
+      inputs={inputs}
+      onCalcular={loading ? null : calcular}
+      result={resultPanel}
+      codeRaw={codeRaw}
     />
-  );
-};
-
-export default Trapecio;
+  )
+}
