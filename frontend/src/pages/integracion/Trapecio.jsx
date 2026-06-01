@@ -1,31 +1,37 @@
 /**
  * Página: Regla del Trapecio
  *
- * Usa IntegralChart para mostrar el gráfico SVG nativo con:
- *  - Relleno sombreado del área aproximada
- *  - Línea de trapecios (naranja)
- *  - Curva f(x) real (azul)
- *  - Nodos x_i evaluados (verde)
+ * Arreglos aplicados respecto a la versión anterior:
+ *  1. TABLA: se mueve al MethodLayout (props iteraciones/columns) usando IterTable
+ *     compartido — renderizado fuera de las cards, idéntico a Bisección/Newton.
+ *  2. METRICS-BAR: padding-left en el segundo metric-item para evitar
+ *     superposición con el divider vertical.
+ *  3. HISTORIAL: pushHistory() al contexto global tras cálculo exitoso.
+ *  4. PDF: PdfButton integrado en el panel de inputs tras el resultado.
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useSettings } from '../../hooks/useSettings'
+import { useHistory } from '../../hooks/useHistory'
 import { apiPost } from '../../utils/api'
 import Latex from '../../components/Latex'
 import MethodLayout, {
   Expander,
   FormulaInput,
   EmptyPanel,
+  IterTable,
+  PdfButton,
 } from '../../components/MethodLayout'
 import IntegralChart from './IntegralChart'
 
-// ── Columnas de la tabla de puntos ──────────────────────────────────────────
+// ── Columnas de la tabla — misma estructura que COLS en Biseccion.jsx ────────
 const COLS = [
   { key: 'x',  label: 'xᵢ'    },
   { key: 'fx', label: 'f(xᵢ)' },
 ]
 
-// ── Panel de resultados ──────────────────────────────────────────────────────
+// ── Panel de resultados (solo gráfico + métricas, sin tabla inline) ──────────
 function IntegralResultPanel({ resultado }) {
   const { integral, puntos, metodo, curva_f, aproximacion } = resultado
 
@@ -46,8 +52,8 @@ function IntegralResultPanel({ resultado }) {
         </div>
       </div>
 
-      {/* Métricas */}
-      <div className="metrics-bar">
+      {/* Métricas — FIX #2: gap + paddingLeft para evitar superposición con divider */}
+      <div className="metrics-bar" style={{ gap: '16px' }}>
         <div className="metric-item" style={{ flex: 1 }}>
           <div className="metric-label">∫ f(x) dx ≈</div>
           <div className="metric-value" style={{ fontSize: '1.6rem' }}>
@@ -55,55 +61,21 @@ function IntegralResultPanel({ resultado }) {
           </div>
         </div>
         <div className="metric-divider" />
-        <div className="metric-item">
+        <div className="metric-item" style={{ paddingLeft: '16px' }}>
           <div className="metric-label">Nodos evaluados</div>
           <div className="metric-value">{puntos.length}</div>
         </div>
       </div>
 
-      {/* ── GRÁFICO ── */}
+      {/* Gráfico */}
       {curva_f && aproximacion && (
-        <div style={{ marginTop: '1.2rem', padding: '8px 0' }}>
+        <div id="chart-pdf-container" style={{ marginTop: '1.2rem', padding: '8px 0' }}>
           <IntegralChart
             curvaF={curva_f}
             aproximacion={aproximacion}
             nodos={puntos}
             titulo="Trapecios"
           />
-        </div>
-      )}
-
-      {/* Tabla de puntos */}
-      {puntos.length > 0 && (
-        <div style={{ marginTop: '1rem' }}>
-          <Expander
-            className="expander--table"
-            title="Ver tabla de nodos evaluados"
-            badge={`${puntos.length} PUNTOS`}
-          >
-            <div className="table-wrap" style={{ fontSize: '0.78rem' }}>
-              <table>
-                <thead>
-                  <tr>
-                    <th>i</th>
-                    {COLS.map(c => <th key={c.key}>{c.label}</th>)}
-                  </tr>
-                </thead>
-                <tbody>
-                  {puntos.map((row, i) => (
-                    <tr key={i}>
-                      <td>{i}</td>
-                      {COLS.map(c => (
-                        <td key={c.key}>
-                          {row[c.key] != null ? Number(row[c.key]).toFixed(8) : '—'}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Expander>
         </div>
       )}
     </div>
@@ -113,6 +85,8 @@ function IntegralResultPanel({ resultado }) {
 // ── Componente principal ─────────────────────────────────────────────────────
 export default function Trapecio() {
   const { settings } = useSettings()
+  const { push: pushHistory } = useHistory()
+  const [searchParams] = useSearchParams()
 
   const [f, setF]   = useState('')
   const [a, setA]   = useState(0)
@@ -122,6 +96,18 @@ export default function Trapecio() {
   const [resultado, setResultado] = useState(null)
   const [error, setError]         = useState(null)
   const [loading, setLoading]     = useState(false)
+
+  // Leer parámetros de la URL ("Volver a ejecutar" desde Historial)
+  useEffect(() => {
+    const pf = searchParams.get('f')
+    const pa = searchParams.get('a')
+    const pb = searchParams.get('b')
+    const pn = searchParams.get('n')
+    if (pf) setF(pf)
+    if (pa !== null) setA(parseFloat(pa))
+    if (pb !== null) setB(parseFloat(pb))
+    if (pn !== null) setN(parseInt(pn))
+  }, [])
 
   async function calcular() {
     if (!f.trim()) { setError('Ingresa una función f(x).'); return }
@@ -133,6 +119,14 @@ export default function Trapecio() {
         f, a: Number(a), b: Number(b), n: Number(n), trig_mode: settings.trigMode,
       })
       setResultado(data)
+
+      // FIX #3: Despachar al historial global
+      pushHistory({
+        method: 'Trapecio',
+        displayParams: { 'f(x)': f, a, b, n },
+        queryParams: { f, a, b, n },
+        raiz: data.integral,   // usamos "raiz" como campo genérico del resultado principal
+      })
     } catch (e) {
       const detail = e.response?.data?.detail
       setError(typeof detail === 'string' ? detail : 'Error al calcular. Verifica la función.')
@@ -188,6 +182,17 @@ export default function Trapecio() {
           onChange={e => setN(parseInt(e.target.value))} />
       </div>
       {error && <div className="alert alert-error">{error}</div>}
+
+      {/* FIX #4: Botón de PDF — idéntico al patrón de Bisección */}
+      {resultado && (
+        <PdfButton
+          title="Trapecio"
+          f={f}
+          params={{ 'Límite a': a, 'Límite b': b, 'Intervalos n': n }}
+          result={{ raiz: resultado.integral, iteraciones: resultado.puntos }}
+          columns={COLS}
+        />
+      )}
     </>
   )
 
@@ -217,6 +222,10 @@ print(f"Integral ≈ {resultado:.8f}")`
       onCalcular={loading ? null : calcular}
       result={resultPanel}
       codeRaw={codeRaw}
+      /* FIX #1: Tabla delegada al MethodLayout — se renderiza fuera de
+         las cards con IterTable + Expander, idéntico a Bisección/Newton */
+      iteraciones={resultado?.puntos}
+      columns={COLS}
     />
   )
 }

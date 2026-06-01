@@ -1,19 +1,24 @@
 /**
  * Página: Regla de Simpson 3/8
  *
- * Usa IntegralChart para mostrar las cúbicas interpoladas (naranja),
- * la curva f(x) real (azul) y los nodos x_i (verde).
- * Valida que n sea múltiplo de 3 con advertencia visual en tiempo real.
+ * Arreglos aplicados:
+ *  1. TABLA: delegada a MethodLayout (iteraciones/columns) → IterTable compartido.
+ *  2. METRICS-BAR: gap + paddingLeft para separar del divider.
+ *  3. HISTORIAL: pushHistory al contexto global tras cálculo exitoso.
+ *  4. PDF: PdfButton integrado en inputs.
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useSettings } from '../../hooks/useSettings'
+import { useHistory } from '../../hooks/useHistory'
 import { apiPost } from '../../utils/api'
 import Latex from '../../components/Latex'
 import MethodLayout, {
   Expander,
   FormulaInput,
   EmptyPanel,
+  PdfButton,
 } from '../../components/MethodLayout'
 import IntegralChart from './IntegralChart'
 
@@ -27,6 +32,7 @@ function multiplo3Cercano(v) {
   return r === 0 ? 3 : r
 }
 
+// ── Panel de resultados (sin tabla inline) ───────────────────────────────────
 function IntegralResultPanel({ resultado }) {
   const { integral, puntos, metodo, curva_f, aproximacion } = resultado
   return (
@@ -40,20 +46,21 @@ function IntegralResultPanel({ resultado }) {
         </div>
       </div>
 
-      <div className="metrics-bar">
+      {/* FIX #2: gap + paddingLeft evita superposición con divider */}
+      <div className="metrics-bar" style={{ gap: '16px' }}>
         <div className="metric-item" style={{ flex: 1 }}>
           <div className="metric-label">∫ f(x) dx ≈</div>
           <div className="metric-value" style={{ fontSize: '1.6rem' }}>{Number(integral).toFixed(8)}</div>
         </div>
         <div className="metric-divider" />
-        <div className="metric-item">
+        <div className="metric-item" style={{ paddingLeft: '16px' }}>
           <div className="metric-label">Nodos evaluados</div>
           <div className="metric-value">{puntos.length}</div>
         </div>
       </div>
 
       {curva_f && aproximacion && (
-        <div style={{ marginTop: '1.2rem', padding: '8px 0' }}>
+        <div id="chart-pdf-container" style={{ marginTop: '1.2rem', padding: '8px 0' }}>
           <IntegralChart
             curvaF={curva_f}
             aproximacion={aproximacion}
@@ -62,36 +69,15 @@ function IntegralResultPanel({ resultado }) {
           />
         </div>
       )}
-
-      {puntos.length > 0 && (
-        <div style={{ marginTop: '1rem' }}>
-          <Expander className="expander--table" title="Ver tabla de nodos evaluados" badge={`${puntos.length} PUNTOS`}>
-            <div className="table-wrap" style={{ fontSize: '0.78rem' }}>
-              <table>
-                <thead>
-                  <tr><th>i</th>{COLS.map(c => <th key={c.key}>{c.label}</th>)}</tr>
-                </thead>
-                <tbody>
-                  {puntos.map((row, i) => (
-                    <tr key={i}>
-                      <td>{i}</td>
-                      {COLS.map(c => (
-                        <td key={c.key}>{row[c.key] != null ? Number(row[c.key]).toFixed(8) : '—'}</td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Expander>
-        </div>
-      )}
     </div>
   )
 }
 
+// ── Componente principal ─────────────────────────────────────────────────────
 export default function Simpson38() {
   const { settings } = useSettings()
+  const { push: pushHistory } = useHistory()
+  const [searchParams] = useSearchParams()
 
   const [f, setF]   = useState('')
   const [a, setA]   = useState(0)
@@ -102,11 +88,23 @@ export default function Simpson38() {
   const [error, setError]         = useState(null)
   const [loading, setLoading]     = useState(false)
 
+  // Leer parámetros de la URL ("Volver a ejecutar" desde Historial)
+  useEffect(() => {
+    const pf = searchParams.get('f')
+    const pa = searchParams.get('a')
+    const pb = searchParams.get('b')
+    const pn = searchParams.get('n')
+    if (pf) setF(pf)
+    if (pa !== null) setA(parseFloat(pa))
+    if (pb !== null) setB(parseFloat(pb))
+    if (pn !== null) setN(parseInt(pn))
+  }, [])
+
   const nEsMultiplo3 = Number(n) > 0 && Number(n) % 3 === 0
 
   async function calcular() {
-    if (!f.trim())    { setError('Ingresa una función f(x).'); return }
-    if (!nEsMultiplo3) {
+    if (!f.trim())      { setError('Ingresa una función f(x).'); return }
+    if (!nEsMultiplo3)  {
       setError(`Simpson 3/8 requiere n múltiplo de 3. Prueba con n=${multiplo3Cercano(Number(n))}.`)
       return
     }
@@ -117,6 +115,14 @@ export default function Simpson38() {
         f, a: Number(a), b: Number(b), n: Number(n), trig_mode: settings.trigMode,
       })
       setResultado(data)
+
+      // FIX #3: Despachar al historial global
+      pushHistory({
+        method: 'Simpson 3/8',
+        displayParams: { 'f(x)': f, a, b, n },
+        queryParams: { f, a, b, n },
+        raiz: data.integral,
+      })
     } catch (e) {
       const detail = e.response?.data?.detail
       setError(typeof detail === 'string' ? detail : 'Error al calcular. Verifica la función.')
@@ -178,6 +184,17 @@ export default function Simpson38() {
         )}
       </div>
       {error && <div className="alert alert-error">{error}</div>}
+
+      {/* FIX #4: PdfButton */}
+      {resultado && (
+        <PdfButton
+          title="Simpson 3/8"
+          f={f}
+          params={{ 'Límite a': a, 'Límite b': b, 'Intervalos n': n }}
+          result={{ raiz: resultado.integral, iteraciones: resultado.puntos }}
+          columns={COLS}
+        />
+      )}
     </>
   )
 
@@ -204,6 +221,9 @@ print(f"Integral ≈ {resultado:.8f}")`
       onCalcular={loading ? null : calcular}
       result={resultado ? <IntegralResultPanel resultado={resultado} /> : <EmptyPanel />}
       codeRaw={codeRaw}
+      /* FIX #1: Tabla delegada al MethodLayout con IterTable compartido */
+      iteraciones={resultado?.puntos}
+      columns={COLS}
     />
   )
 }
