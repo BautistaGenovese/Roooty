@@ -97,6 +97,22 @@ export default function Trapecio() {
   const [error, setError]         = useState(null)
   const [loading, setLoading]     = useState(false)
 
+  const MAX_OPTIMO = 500
+  const MAX_ABSOLUTO = MAX_OPTIMO + 10
+
+  const handleNChange = (e) => {
+    let val = parseInt(e.target.value)
+    if (isNaN(val)) {
+      setN('')
+      return
+    }
+    if (val > MAX_ABSOLUTO) {
+      setN(MAX_ABSOLUTO)
+    } else {
+      setN(val)
+    }
+  }
+
   // Leer parámetros de la URL ("Volver a ejecutar" desde Historial)
   useEffect(() => {
     const pf = searchParams.get('f')
@@ -178,8 +194,20 @@ export default function Trapecio() {
             (cualquier entero &gt; 0)
           </span>
         </label>
-        <input className="form-number" type="number" min={1} step={1} value={n}
-          onChange={e => setN(parseInt(e.target.value))} />
+        <input 
+          className="form-number" 
+          type="number" 
+          min={1} 
+          max={Number(n) > MAX_OPTIMO ? MAX_ABSOLUTO : undefined}
+          step={1} 
+          value={n}
+          onChange={handleNChange} 
+        />
+        {Number(n) > MAX_OPTIMO && (
+          <p style={{ fontSize: '0.78rem', color: '#d97706', marginTop: 4, fontWeight: 600 }}>
+            ⚠️ Alerta de rendimiento: Un número de intervalos mayor a {MAX_OPTIMO} puede ralentizar la app. Se ha activado el modo de tolerancia máxima (+10 intervalos).
+          </p>
+        )}
       </div>
       {error && <div className="alert alert-error">{error}</div>}
 

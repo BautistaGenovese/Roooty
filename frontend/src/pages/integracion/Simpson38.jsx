@@ -88,6 +88,22 @@ export default function Simpson38() {
   const [error, setError]         = useState(null)
   const [loading, setLoading]     = useState(false)
 
+  const MAX_OPTIMO = 500
+  const MAX_ABSOLUTO = MAX_OPTIMO + 10
+
+  const handleNChange = (e) => {
+    let val = parseInt(e.target.value)
+    if (isNaN(val)) {
+      setN('')
+      return
+    }
+    if (val > MAX_ABSOLUTO) {
+      setN(MAX_ABSOLUTO)
+    } else {
+      setN(val)
+    }
+  }
+
   // Leer parámetros de la URL ("Volver a ejecutar" desde Historial)
   useEffect(() => {
     const pf = searchParams.get('f')
@@ -174,12 +190,18 @@ export default function Simpson38() {
         </label>
         <input
           className="form-number" type="number" min={3} step={3} value={n}
-          onChange={e => setN(parseInt(e.target.value))}
+          onChange={handleNChange}
+          max={Number(n) > MAX_OPTIMO ? MAX_ABSOLUTO : undefined}
           style={{ borderColor: !nEsMultiplo3 && Number(n) > 0 ? 'var(--error, #ef4444)' : undefined }}
         />
         {!nEsMultiplo3 && Number(n) > 0 && (
           <p style={{ fontSize: '0.78rem', color: 'var(--error, #ef4444)', marginTop: 4 }}>
             ⚠ n={n} no es múltiplo de 3. Prueba con n={multiplo3Cercano(Number(n))}.
+          </p>
+        )}
+        {Number(n) > MAX_OPTIMO && (
+          <p style={{ fontSize: '0.78rem', color: '#d97706', marginTop: 4, fontWeight: 600 }}>
+            ⚠️ Alerta de rendimiento: Un número de intervalos mayor a {MAX_OPTIMO} puede ralentizar la app. Se ha activado el modo de tolerancia máxima (+10 intervalos).
           </p>
         )}
       </div>
