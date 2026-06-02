@@ -77,6 +77,9 @@ function AugmentedInputGrid({ n, A, b, onChangeA, onChangeB }) {
 
   // ── Change handlers ───────────────────────────────────────────────────────────
   function handleChangeA(i, j, raw) {
+    raw = raw.replace(',', '.')
+    if (!/^-?\d*\.?\d*$/.test(raw)) return
+
     setDispA(prev => {
       const d = prev.map(r => [...r])
       d[i][j] = raw
@@ -87,6 +90,9 @@ function AugmentedInputGrid({ n, A, b, onChangeA, onChangeB }) {
   }
 
   function handleChangeB(i, raw) {
+    raw = raw.replace(',', '.')
+    if (!/^-?\d*\.?\d*$/.test(raw)) return
+
     setDispB(prev => { const d = [...prev]; d[i] = raw; return d })
     const v = raw === '' || raw === '-' ? 0 : parseFloat(raw)
     if (!isNaN(v)) onChangeB(i, v)
@@ -138,7 +144,8 @@ function AugmentedInputGrid({ n, A, b, onChangeA, onChangeB }) {
               <input
                 key={`A-${i}-${j}`}
                 ref={el => { inputRefs.current[`A-${i}-${j}`] = el }}
-                type="number"
+                type="text"
+                inputMode="decimal"
                 className="form-number"
                 style={inputStyle}
                 value={dispA[i]?.[j] ?? ''}
@@ -164,7 +171,8 @@ function AugmentedInputGrid({ n, A, b, onChangeA, onChangeB }) {
             <input
               key={`b-${i}`}
               ref={el => { inputRefs.current[`b-${i}`] = el }}
-              type="number"
+              type="text"
+              inputMode="decimal"
               className="form-number"
               style={{ ...inputStyle, background: 'rgba(59,130,246,0.06)', borderColor: 'var(--blue)' }}
               value={dispB[i] ?? ''}
