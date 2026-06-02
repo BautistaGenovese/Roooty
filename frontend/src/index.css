@@ -849,9 +849,6 @@ html.dark .utility-btn--active .util-icon {
 }
 
 .settings-panel {
-  position: fixed;
-  bottom: 80px;
-  left: 10px;
   width: 260px;
   background: var(--white-alpha);
   backdrop-filter: blur(16px);
@@ -859,12 +856,13 @@ html.dark .utility-btn--active .util-icon {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 1.2rem;
-  z-index: 1000;
+  z-index: 9999;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   max-height: 70vh;
   overflow-y: auto;
   opacity: 0;
   animation: popIn 0.2s forwards ease-out;
+  transform-origin: bottom left;
 }
 
 @keyframes popIn {
