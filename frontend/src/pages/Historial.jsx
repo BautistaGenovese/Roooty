@@ -57,10 +57,13 @@ function HistoryCard({ entry }) {
 
       {entry.raiz != null && (
         <div className="history-card-result">
-          <span className="history-result-label">Raíz encontrada</span>
+          <span className="history-result-label">
+            {METHOD_ROUTES[entry.method]?.startsWith('/integracion') ? 'Integral ≈' : 'Raíz encontrada'}
+          </span>
           <span className="history-result-value">{Number(entry.raiz).toFixed(8)}</span>
         </div>
       )}
+
 
       {entry.raiz == null && (
         <div className="history-card-result history-card-result--fail">
