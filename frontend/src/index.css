@@ -849,9 +849,9 @@ html.dark .utility-btn--active .util-icon {
 }
 
 .settings-panel {
-  position: fixed;
-  bottom: 80px;
-  left: 10px;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
   width: 260px;
   background: var(--white-alpha);
   backdrop-filter: blur(16px);
@@ -865,6 +865,7 @@ html.dark .utility-btn--active .util-icon {
   overflow-y: auto;
   opacity: 0;
   animation: popIn 0.2s forwards ease-out;
+  transform-origin: bottom left;
 }
 
 @keyframes popIn {

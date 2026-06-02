@@ -316,8 +316,10 @@ export default function Inicio() {
             </div>
             <div className="method-guide-example">
               <span className="method-ex-label">📌 Ejemplo típico:</span>
-              <div style={{ margin: '8px 0', fontSize: '0.9em', display: 'flex', justifyContent: 'center', overflowX: 'auto', paddingBottom: '4px' }}>
-                <Latex tex={String.raw`\begin{pmatrix} 2 & -1 & 1 & 3 \\ 1 & 3 & -2 & 2 \\ 3 & 1 & 4 & -1 \\ -1 & 2 & -1 & 5 \end{pmatrix} x = \begin{pmatrix} 14 \\ -2 \\ 19 \\ 10 \end{pmatrix}`} display={true} />
+              <div style={{ margin: '8px 0', fontSize: '0.9em', display: 'flex', overflowX: 'auto', paddingBottom: '4px', width: '100%', WebkitOverflowScrolling: 'touch' }}>
+                <div style={{ margin: '0 auto', minWidth: 0, padding: '0 8px' }}>
+                  <Latex tex={String.raw`\begin{pmatrix} 2 & -1 & 1 & 3 \\ 1 & 3 & -2 & 2 \\ 3 & 1 & 4 & -1 \\ -1 & 2 & -1 & 5 \end{pmatrix} x = \begin{pmatrix} 14 \\ -2 \\ 19 \\ 10 \end{pmatrix}`} display={true} />
+                </div>
               </div>
               <button
                 className="try-example-btn"
@@ -343,8 +345,10 @@ export default function Inicio() {
             </div>
             <div className="method-guide-example">
               <span className="method-ex-label">📌 Ejemplo típico:</span>
-              <div style={{ margin: '8px 0', fontSize: '0.9em', display: 'flex', justifyContent: 'center', overflowX: 'auto', paddingBottom: '4px' }}>
-                <Latex tex={String.raw`\begin{pmatrix} 4 & -1 & 0 & -1 \\ -1 & 4 & -1 & 0 \\ 0 & -1 & 4 & -1 \\ -1 & 0 & -1 & 4 \end{pmatrix} x = \begin{pmatrix} 30 \\ 0 \\ 0 \\ 0 \end{pmatrix}`} display={true} />
+              <div style={{ margin: '8px 0', fontSize: '0.9em', display: 'flex', overflowX: 'auto', paddingBottom: '4px', width: '100%', WebkitOverflowScrolling: 'touch' }}>
+                <div style={{ margin: '0 auto', minWidth: 0, padding: '0 8px' }}>
+                  <Latex tex={String.raw`\begin{pmatrix} 4 & -1 & 0 & -1 \\ -1 & 4 & -1 & 0 \\ 0 & -1 & 4 & -1 \\ -1 & 0 & -1 & 4 \end{pmatrix} x = \begin{pmatrix} 30 \\ 0 \\ 0 \\ 0 \end{pmatrix}`} display={true} />
+                </div>
               </div>
               <button
                 className="try-example-btn"
