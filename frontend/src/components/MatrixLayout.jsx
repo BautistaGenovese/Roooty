@@ -115,7 +115,6 @@ export function SolutionVector({ solucion }) {
   )
 }
 
-<<<<<<< HEAD
 // ─── STEPS PANEL ──────────────────────────────────────────────────────────────
 /**
  * Shows the Gauss-Jordan reduction steps as an interactive accordion.
@@ -287,11 +286,7 @@ export function MatrixResultsPanel({ result, apiError }) {
 }
 
 // ─── MATRIX LAYOUT ────────────────────────────────────────────────────────────
-export default function MatrixLayout({ title, badge, teoria, inputs, onCalcular, result, error, codeRaw, matrixA, vectorB }) {
-=======
-// ─── MATRIX LAYOUT ──────────────────────────────────────────────────────────────
-export default function MatrixLayout({ title, badge, teoria, inputs, onCalcular, result, resultContent, codeRaw, iteraciones, columns, extra, hidePdf }) {
->>>>>>> 23cddc20078d5332f145062866712271a2e3b6ad
+export default function MatrixLayout({ title, badge, teoria, inputs, onCalcular, result, error, resultContent, codeRaw, matrixA, vectorB, iteraciones, columns, extra, hidePdf }) {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = () => {
@@ -304,54 +299,40 @@ export default function MatrixLayout({ title, badge, teoria, inputs, onCalcular,
   // PDF generation
   const handleGeneratePdf = () => {
     try {
-<<<<<<< HEAD
       const doc = new jsPDF({ format: 'letter' })
       const n = matrixA?.length || 0
-      // Page usable width for letter (215.9mm) with 14mm margins
       const pageW = 215.9
       const marginL = 14
 
-      // Helper: format a number for display
       const fmt = v => {
         const num = Number(v)
         if (Math.abs(num) < 1e-9) return '0'
-        // Show up to 4 sig digits, trim trailing zeros
         return parseFloat(num.toFixed(4)).toString()
-=======
-      const doc = new jsPDF({ format: 'letter' });
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(18);
-      doc.setTextColor(59, 130, 246);
-      doc.text(`Reporte de Sistemas de Ecuaciones - Rooty`, 14, 20);
-      
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(30, 41, 59);
-      doc.text(`Método: ${title}`, 14, 30);
-      
-      if (iteraciones && columns) {
-        // Si la primera columna ya es identificadora (variable name), omitir 'Iter'
-        const firstColIsLabel = iteraciones.length > 0 && typeof iteraciones[0][columns[0]?.key] === 'string';
-        const head = firstColIsLabel
-          ? [ columns.map(c => c.label) ]
-          : [ ['#', ...columns.map(c => c.label)] ];
+      }
+
+      // Fallback PDF when matrixA not provided (e.g. other methods using iteraciones)
+      if (!matrixA && iteraciones && columns) {
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(18)
+        doc.setTextColor(59, 130, 246)
+        doc.text(`Reporte - ${title}`, marginL, 20)
+        doc.setFontSize(12)
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(30, 41, 59)
+        doc.text(`Método: ${title}`, marginL, 30)
+        const firstColIsLabel = iteraciones.length > 0 && typeof iteraciones[0][columns[0]?.key] === 'string'
+        const head = firstColIsLabel ? [columns.map(c => c.label)] : [['#', ...columns.map(c => c.label)]]
         const body = iteraciones.map((row, i) => [
           ...(firstColIsLabel ? [] : [i]),
           ...columns.map(c => {
-            const v = row[c.key];
-            if (v == null) return '—';
-            return typeof v === 'number' ? v.toFixed(6) : String(v);
+            const v = row[c.key]
+            if (v == null) return '—'
+            return typeof v === 'number' ? v.toFixed(6) : String(v)
           })
-        ]);
-
-        autoTable(doc, {
-          startY: 40,
-          head: head,
-          body: body,
-          theme: 'grid',
-          headStyles: { fillColor: [59, 130, 246] },
-        });
->>>>>>> 23cddc20078d5332f145062866712271a2e3b6ad
+        ])
+        autoTable(doc, { startY: 40, head, body, theme: 'grid', headStyles: { fillColor: [59, 130, 246] } })
+        doc.save(`Reporte_${title || 'Matrices'}.pdf`)
+        return
       }
 
       // ── Draw augmented matrix [A|b] with bracket lines ──────────────────────
@@ -547,15 +528,12 @@ export default function MatrixLayout({ title, badge, teoria, inputs, onCalcular,
         {/* resultContent toma prioridad: permite que páginas como Gauss inyecten
             su propio panel sin que MatrixResultsPanel pise el renderizado. */}
         <div className="card">
-<<<<<<< HEAD
-          {(result || error) ? (
-            <MatrixResultsPanel result={result} apiError={error} />
-=======
-          {(resultContent != null || result != null) ? (
+          {/* resultContent takes priority (EliminacionGaussiana injects its own panel).
+              Falls back to MatrixResultsPanel when result or error is present. */}
+          {(resultContent != null || result != null || error) ? (
             resultContent != null
               ? resultContent
-              : <MatrixResultsPanel result={result} iteraciones={iteraciones} columns={columns} />
->>>>>>> 23cddc20078d5332f145062866712271a2e3b6ad
+              : <MatrixResultsPanel result={result} apiError={error} />
           ) : (
             <div className="empty-panel">
               <div className="empty-panel-icon"></div>
@@ -565,11 +543,7 @@ export default function MatrixLayout({ title, badge, teoria, inputs, onCalcular,
             </div>
           )}
 
-<<<<<<< HEAD
-          {result && (
-=======
-          {(resultContent != null || result != null) && !hidePdf && (
->>>>>>> 23cddc20078d5332f145062866712271a2e3b6ad
+          {(resultContent != null || result != null || error) && !hidePdf && (
             <div style={{ marginTop: '1rem' }}>
               <button className="btn btn-secondary" onClick={handleGeneratePdf}>
                 Generar reporte en PDF
