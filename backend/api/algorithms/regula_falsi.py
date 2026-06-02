@@ -1,13 +1,15 @@
 """Método de Regula Falsi (Falsa Posición) para búsqueda de raíces."""
 
-from api.utils.math_helpers import evaluar_f, calcular_error
+from api.utils.math_helpers import compilar_funcion, calcular_error
 from api.models.schemas import BiseccionRequest
 
 
 def run_regula_falsi(req: BiseccionRequest):
     a, b = req.a, req.b
-    fa = evaluar_f(req.f, a, req.trig_mode)
-    fb = evaluar_f(req.f, b, req.trig_mode)
+    
+    f_compilada, _ = compilar_funcion(req.f, req.trig_mode)
+    fa = f_compilada(a)
+    fb = f_compilada(b)
     rows = []
 
     if fa * fb >= 0:
@@ -24,7 +26,7 @@ def run_regula_falsi(req: BiseccionRequest):
             return None, rows, "División por cero. Los puntos están muy cerca."
 
         x = b - (fb * (b - a)) / (fb - fa)
-        fx = evaluar_f(req.f, x, req.trig_mode)
+        fx = f_compilada(x)
         err_cal = calcular_error(x, x_anterior, req.tipo_error)
 
         rows.append({
