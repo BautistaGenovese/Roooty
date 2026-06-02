@@ -18,6 +18,8 @@ import Trapecio from './pages/integracion/Trapecio'
 import Simpson13 from './pages/integracion/Simpson13'
 import Simpson38 from './pages/integracion/Simpson38'
 
+import GaussJordan from './pages/matrices/GaussJordan'
+
 function MainContent({ children }) {
   const location = useLocation();
   const mainRef = useRef(null);
@@ -79,6 +81,9 @@ export default function App() {
                 <Route path="/integracion/trapecio" element={<Trapecio />} />
                 <Route path="/integracion/simpson13" element={<Simpson13 />} />
                 <Route path="/integracion/simpson38" element={<Simpson38 />} />
+
+                {/* Sistemas Lineales */}
+                <Route path="/matrices/gauss-jordan" element={<GaussJordan />} />
               </Routes>
             </MainContent>
           </div>

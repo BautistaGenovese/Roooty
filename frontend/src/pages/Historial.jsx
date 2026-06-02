@@ -12,6 +12,7 @@ const METHOD_ROUTES = {
   'Trapecio': '/integracion/trapecio',
   'Simpson 1/3': '/integracion/simpson13',
   'Simpson 3/8': '/integracion/simpson38',
+  'Gauss-Jordan': '/matrices/gauss-jordan',
 }
 
 function timeAgo(date) {
@@ -58,9 +59,15 @@ function HistoryCard({ entry }) {
       {entry.raiz != null && (
         <div className="history-card-result">
           <span className="history-result-label">
-            {METHOD_ROUTES[entry.method]?.startsWith('/integracion') ? 'Integral ≈' : 'Raíz encontrada'}
+            {entry.method === 'Gauss-Jordan'
+              ? 'Solución'
+              : METHOD_ROUTES[entry.method]?.startsWith('/integracion') ? 'Integral ≈' : 'Raíz encontrada'}
           </span>
-          <span className="history-result-value">{Number(entry.raiz).toFixed(8)}</span>
+          <span className="history-result-value" style={{ fontSize: entry.method === 'Gauss-Jordan' ? '0.82rem' : undefined }}>
+            {entry.method === 'Gauss-Jordan'
+              ? `[${entry.raiz}]`
+              : Number(entry.raiz).toFixed(8)}
+          </span>
         </div>
       )}
 

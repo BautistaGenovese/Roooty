@@ -63,3 +63,9 @@ class IntegracionRequest(BaseModel):
     b: float
     n: int = 100
     trig_mode: str = "Radianes"
+
+
+class GaussJordanRequest(BaseModel):
+    """Gauss-Jordan: recibe la matriz A (n×n) y el vector b (n) del sistema Ax=b."""
+    A: List[List[float]]
+    b: List[float]
