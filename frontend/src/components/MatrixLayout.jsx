@@ -3,6 +3,10 @@ import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { Expander, VSCodeBlock } from './MethodLayout'
 
+// Variable names for unknowns: x, y, z, w, v, u, then x7, x8...
+const VAR_NAMES = ['x', 'y', 'z', 'w', 'v', 'u']
+const varLabel = i => VAR_NAMES[i] ?? `x${i + 1}`
+
 // ─── AUGMENTED MATRIX DISPLAY ────────────────────────────────────────────────
 /**
  * Renders a matrix in bracket notation with an optional divider column.
@@ -100,7 +104,7 @@ export function SolutionVector({ solucion }) {
             gap: '6px',
             fontFamily: 'var(--font-mono)',
           }}>
-            <span style={{ color: 'var(--slate)', fontSize: '0.82rem' }}>x<sub>{i + 1}</sub> =</span>
+            <span style={{ color: 'var(--slate)', fontSize: '0.82rem' }}>{varLabel(i)} =</span>
             <span style={{ color: 'var(--navy)', fontWeight: 700, fontSize: '1rem' }}>
               {Math.abs(val) < 1e-9 ? '0' : val.toFixed(6)}
             </span>
@@ -117,8 +121,6 @@ export function SolutionVector({ solucion }) {
  * Each step has a description and the current state of the augmented matrix.
  */
 export function StepsPanel({ pasos }) {
-  const [activeStep, setActiveStep] = useState(null)
-
   if (!pasos || pasos.length === 0) return null
 
   return (
@@ -130,7 +132,6 @@ export function StepsPanel({ pasos }) {
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {pasos.map((paso, i) => {
-            const isActive = activeStep === i
             const isNorm = paso.descripcion.startsWith('Normaliz')
             const isSwap = paso.descripcion.startsWith('Intercambio')
             const isElim = paso.descripcion.startsWith('Eliminación')
@@ -147,21 +148,15 @@ export function StepsPanel({ pasos }) {
                     : 'var(--slate)'
 
             return (
-              <div key={i} style={{ borderRadius: '8px', border: `1px solid ${isActive ? accent : 'var(--border)'}`, overflow: 'hidden', transition: 'border-color 0.2s' }}>
+              <div key={i} style={{ borderRadius: '8px', border: `1px solid ${accent}`, overflow: 'hidden' }}>
                 {/* Step header */}
-                <button
-                  onClick={() => setActiveStep(isActive ? null : i)}
+                <div
                   style={{
-                    width: '100%',
-                    background: isActive ? `${accent}14` : 'var(--gray-50)',
-                    border: 'none',
+                    background: `${accent}18`,
                     padding: '10px 14px',
-                    cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '10px',
-                    textAlign: 'left',
-                    transition: 'background 0.2s',
                   }}
                 >
                   <span style={{
@@ -169,23 +164,21 @@ export function StepsPanel({ pasos }) {
                     background: accent, color: '#fff',
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: '0.75rem', fontWeight: 800,
+                    flexShrink: 0,
                   }}>{i + 1}</span>
                   <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--navy)', flex: 1 }}>
                     {paso.descripcion}
                   </span>
-                  <span style={{ color: 'var(--slate)', fontSize: '0.8rem' }}>{isActive ? '▲' : '▼'}</span>
-                </button>
+                </div>
 
-                {/* Step body — augmented matrix */}
-                {isActive && (
-                  <div style={{ padding: '12px 14px', background: 'var(--surface)', overflowX: 'auto' }}>
-                    <MatrixDisplay
-                      matrix={paso.matriz}
-                      highlightPivotRow={paso.pivote_fila}
-                      highlightRow={paso.fila_modificada}
-                    />
-                  </div>
-                )}
+                {/* Step body — augmented matrix always visible */}
+                <div style={{ padding: '12px 14px', background: 'var(--surface)', overflowX: 'auto' }}>
+                  <MatrixDisplay
+                    matrix={paso.matriz}
+                    highlightPivotRow={paso.pivote_fila}
+                    highlightRow={paso.fila_modificada}
+                  />
+                </div>
               </div>
             )
           })}
@@ -293,7 +286,7 @@ export function MatrixResultsPanel({ result, apiError }) {
 }
 
 // ─── MATRIX LAYOUT ────────────────────────────────────────────────────────────
-export default function MatrixLayout({ title, badge, teoria, inputs, onCalcular, result, error, codeRaw }) {
+export default function MatrixLayout({ title, badge, teoria, inputs, onCalcular, result, error, codeRaw, matrixA, vectorB }) {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = () => {
@@ -307,38 +300,168 @@ export default function MatrixLayout({ title, badge, teoria, inputs, onCalcular,
   const handleGeneratePdf = () => {
     try {
       const doc = new jsPDF({ format: 'letter' })
+      const n = matrixA?.length || 0
+      // Page usable width for letter (215.9mm) with 14mm margins
+      const pageW = 215.9
+      const marginL = 14
+
+      // Helper: format a number for display
+      const fmt = v => {
+        const num = Number(v)
+        if (Math.abs(num) < 1e-9) return '0'
+        // Show up to 4 sig digits, trim trailing zeros
+        return parseFloat(num.toFixed(4)).toString()
+      }
+
+      // ── Draw augmented matrix [A|b] with bracket lines ──────────────────────
+      const drawAugMatrix = (startX, startY) => {
+        const usableW = pageW - marginL * 2
+        // Dynamic cell width: fit all columns plus separator
+        const cellW = Math.min(24, (usableW - 10) / (n + 2))
+        const cellH = 9       // mm per row
+        const serifL = 3      // bracket serif length mm
+        const pad = 1         // inner padding mm
+        const sepGap = 2      // gap around | separator mm
+        const fs = Math.max(7, Math.min(9, Math.floor(cellW * 0.38)))
+
+        // X positions
+        const matStartX = startX + serifL + pad
+        const matW = n * cellW
+        const sepX = matStartX + matW + sepGap        // vertical separator x
+        const bX = sepX + sepGap                      // b-column left edge
+        const bCenterX = bX + cellW / 2
+        const rbX = bX + cellW + pad + serifL         // right bracket x
+        const totalH = n * cellH
+
+        // ── Column headers (variable names + b) ──────────────────────────────
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(fs - 0.5)
+        doc.setTextColor(80, 80, 180)
+        for (let j = 0; j < n; j++) {
+          doc.text(varLabel(j), matStartX + (j + 0.5) * cellW, startY - 1.5, { align: 'center' })
+        }
+        doc.text('b', bCenterX, startY - 1.5, { align: 'center' })
+
+        // ── Numbers ───────────────────────────────────────────────────────────
+        doc.setFont('courier', 'normal')
+        doc.setFontSize(fs)
+        doc.setTextColor(30, 41, 59)
+        for (let i = 0; i < n; i++) {
+          const rowY = startY + i * cellH + cellH * 0.65
+          for (let j = 0; j < n; j++) {
+            doc.text(fmt(matrixA[i][j]), matStartX + (j + 0.5) * cellW, rowY, { align: 'center' })
+          }
+          doc.text(fmt(vectorB[i]), bCenterX, rowY, { align: 'center' })
+        }
+
+        // ── Separator line ────────────────────────────────────────────────────
+        doc.setLineWidth(0.35)
+        doc.setDrawColor(100, 100, 200)
+        doc.line(sepX, startY, sepX, startY + totalH)
+
+        // ── Left bracket [ ────────────────────────────────────────────────────
+        doc.setLineWidth(0.8)
+        doc.setDrawColor(30, 41, 59)
+        const lb = startX
+        doc.line(lb, startY, lb + serifL, startY)              // top serif →
+        doc.line(lb, startY, lb, startY + totalH)              // vertical
+        doc.line(lb, startY + totalH, lb + serifL, startY + totalH)  // bottom serif →
+
+        // ── Right bracket ] ───────────────────────────────────────────────────
+        const rb = rbX
+        doc.line(rb - serifL, startY, rb, startY)              // top serif ←
+        doc.line(rb, startY, rb, startY + totalH)              // vertical
+        doc.line(rb - serifL, startY + totalH, rb, startY + totalH)  // bottom serif ←
+
+        return startY + totalH + 6  // next Y
+      }
+
+      // ── Title ──────────────────────────────────────────────────────────────
       doc.setFont('helvetica', 'bold')
       doc.setFontSize(18)
       doc.setTextColor(59, 130, 246)
-      doc.text('Reporte de Sistemas de Ecuaciones — Roooty', 14, 20)
+      doc.text('Reporte de Sistemas de Ecuaciones — Roooty', marginL, 20)
 
-      doc.setFontSize(12)
+      doc.setFontSize(11)
       doc.setFont('helvetica', 'normal')
       doc.setTextColor(30, 41, 59)
-      doc.text(`Método: ${title}`, 14, 30)
+      doc.text(`Método: ${title}`, marginL, 30)
 
+      let curY = 38
+
+      // ── System of equations ────────────────────────────────────────────────
+      if (matrixA && vectorB && n > 0) {
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(11)
+        doc.setTextColor(30, 41, 59)
+        doc.text('Sistema de ecuaciones:', marginL, curY)
+        curY += 7
+
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(10)
+        for (let i = 0; i < n; i++) {
+          let terms = ''
+          let firstNonZero = true
+          for (let j = 0; j < n; j++) {
+            const c = Number(matrixA[i][j])
+            if (c === 0) continue
+            const abs = Math.abs(c)
+            const sign = firstNonZero
+              ? (c < 0 ? '-' : '')
+              : (c > 0 ? ' + ' : ' - ')
+            const coefStr = abs === 1 ? '' : fmt(abs)
+            terms += `${sign}${coefStr}${varLabel(j)}`
+            firstNonZero = false
+          }
+          if (!terms) terms = '0'
+          doc.text(`  ${terms} = ${fmt(vectorB[i])}`, marginL, curY)
+          curY += 6
+        }
+        curY += 4
+
+        // ── Augmented matrix drawn with brackets ────────────────────────────
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(11)
+        doc.setTextColor(30, 41, 59)
+        doc.text('Matriz aumentada [A | b]:', marginL, curY)
+        curY += 6
+        curY = drawAugMatrix(marginL, curY)
+      }
+
+      // ── Solution ───────────────────────────────────────────────────────────
       if (result?.solucion) {
         doc.setFont('helvetica', 'bold')
-        doc.setTextColor(0, 200, 100)
-        doc.text('Solución:', 14, 40)
+        doc.setFontSize(11)
+        doc.setTextColor(0, 150, 80)
+        doc.text('Solución:', marginL, curY)
+        curY += 6
         doc.setFont('helvetica', 'normal')
         doc.setTextColor(30, 41, 59)
         result.solucion.forEach((val, i) => {
-          doc.text(`  x${i + 1} = ${val.toFixed(6)}`, 14, 48 + i * 7)
+          doc.text(`  ${varLabel(i)} = ${Number(val).toFixed(6)}`, marginL, curY)
+          curY += 6
         })
+        curY += 4
 
+        // ── Steps table ────────────────────────────────────────────────────
         if (result.pasos?.length) {
+          doc.setFont('helvetica', 'bold')
+          doc.setFontSize(11)
+          doc.setTextColor(30, 41, 59)
+          doc.text('Pasos de la reducción:', marginL, curY)
+          curY += 2
           const head = [['Paso', 'Descripción']]
           const body = result.pasos.map((p, i) => [i + 1, p.descripcion])
           autoTable(doc, {
-            startY: 48 + result.solucion.length * 7 + 5,
+            startY: curY,
             head, body,
             theme: 'grid',
             headStyles: { fillColor: [59, 130, 246] },
-            margin: { left: 14, right: 14 },
+            margin: { left: marginL, right: marginL },
           })
         }
       }
+
       doc.save(`Reporte_${title || 'GaussJordan'}.pdf`)
     } catch (err) {
       console.error(err)
@@ -355,7 +478,7 @@ export default function MatrixLayout({ title, badge, teoria, inputs, onCalcular,
         {teoria}
       </div>
 
-      <div className="two-col">
+      <div className="two-col two-col--matrix">
         {/* LEFT — INPUTS */}
         <div className="card">
           <div className="card-header">

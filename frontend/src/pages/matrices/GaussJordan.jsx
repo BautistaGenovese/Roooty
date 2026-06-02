@@ -323,27 +323,61 @@ export default function GaussJordan() {
   )
 
   // ── Inputs ────────────────────────────────────────────────────────────────────
-  const sizeButtons = (
-    <div className="form-group">
-      <label className="form-label">Tamaño del sistema</label>
-      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-        {Array.from({ length: MAX_SIZE - MIN_SIZE + 1 }, (_, i) => i + MIN_SIZE).map(s => (
-          <button
-            key={s}
-            onClick={() => resizeTo(s)}
-            className={`btn ${n === s ? 'btn-primary' : 'btn-secondary'}`}
-            style={{ padding: '4px 14px', fontSize: '0.85rem' }}
-          >
-            {s}×{s}
-          </button>
-        ))}
+  // Local display string so the user can clear the field and retype
+  const [nDisplay, setNDisplay] = useState(String(n))
+
+  const sizeInput = (
+    <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+      <label className="form-label" style={{ margin: 0 }}>Dimensión N</label>
+
+      {/* Stepper row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        {/* Decrement */}
+        <button
+          className="btn btn-secondary"
+          style={{ padding: '4px 10px', fontSize: '1rem', fontWeight: 700, lineHeight: 1 }}
+          disabled={n <= MIN_SIZE}
+          onClick={() => { const next = n - 1; setNDisplay(String(next)); resizeTo(next) }}
+        >−</button>
+
+        {/* Free-type input */}
+        <input
+          type="text"
+          inputMode="numeric"
+          className="form-number"
+          value={nDisplay}
+          style={{ width: '52px', textAlign: 'center', padding: '5px 6px' }}
+          onChange={e => {
+            const raw = e.target.value
+            setNDisplay(raw)
+            const val = parseInt(raw, 10)
+            if (!isNaN(val) && val >= MIN_SIZE && val <= MAX_SIZE) resizeTo(val)
+          }}
+          onBlur={() => {
+            // If the user leaves the field with an out-of-range or empty value, snap back
+            const val = parseInt(nDisplay, 10)
+            if (isNaN(val) || val < MIN_SIZE || val > MAX_SIZE) setNDisplay(String(n))
+          }}
+        />
+
+        {/* Increment */}
+        <button
+          className="btn btn-secondary"
+          style={{ padding: '4px 10px', fontSize: '1rem', fontWeight: 700, lineHeight: 1 }}
+          disabled={n >= MAX_SIZE}
+          onClick={() => { const next = n + 1; setNDisplay(String(next)); resizeTo(next) }}
+        >+</button>
       </div>
+
+      <span style={{ fontSize: '0.75rem', color: 'var(--slate)' }}>
+        × {n} &nbsp;·&nbsp; mín {MIN_SIZE}, máx {MAX_SIZE}
+      </span>
     </div>
   )
 
   const inputs = (
     <>
-      {sizeButtons}
+      {sizeInput}
 
       <p style={{ fontSize: '0.78rem', color: 'var(--slate)', margin: '0.4rem 0 0.8rem' }}>
         Ingresa fila por fila.{' '}
@@ -364,13 +398,6 @@ export default function GaussJordan() {
 
       {/* Action buttons */}
       <div style={{ display: 'flex', gap: '8px', marginTop: '0.8rem', flexWrap: 'wrap' }}>
-        <button
-          className="btn btn-secondary"
-          style={{ fontSize: '0.8rem' }}
-          onClick={loadPreset}
-        >
-          📐 Cargar ejemplo
-        </button>
         <button
           className="btn btn-secondary"
           style={{ fontSize: '0.8rem', color: 'var(--error)', borderColor: 'var(--error)' }}
@@ -421,6 +448,8 @@ export default function GaussJordan() {
       result={result}
       error={error}
       codeRaw={code}
+      matrixA={A}
+      vectorB={b}
     />
   )
 }
