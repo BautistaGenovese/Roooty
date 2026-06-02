@@ -1,13 +1,15 @@
 """Método de Bisección para búsqueda de raíces."""
 
-from api.utils.math_helpers import evaluar_f, calcular_error
+from api.utils.math_helpers import compilar_funcion, calcular_error
 from api.models.schemas import BiseccionRequest
 
 
 def run_biseccion(req: BiseccionRequest):
     a, b = req.a, req.b
-    fa = evaluar_f(req.f, a, req.trig_mode)
-    fb = evaluar_f(req.f, b, req.trig_mode)
+    
+    f_compilada, _ = compilar_funcion(req.f, req.trig_mode)
+    fa = f_compilada(a)
+    fb = f_compilada(b)
     rows = []
 
     if fa * fb >= 0:
@@ -21,7 +23,7 @@ def run_biseccion(req: BiseccionRequest):
 
     for i in range(req.max_iters):
         x = (a + b) / 2
-        fx = evaluar_f(req.f, x, req.trig_mode)
+        fx = f_compilada(x)
 
         err_cal = abs(b - a) / 2 if i == 0 else calcular_error(x, x_anterior, req.tipo_error)
 

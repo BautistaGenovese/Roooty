@@ -1,6 +1,6 @@
 """Método de la Secante para búsqueda de raíces."""
 
-from api.utils.math_helpers import evaluar_f, calcular_error
+from api.utils.math_helpers import compilar_funcion, calcular_error
 from api.models.schemas import SecanteRequest
 
 
@@ -8,18 +8,20 @@ def run_secante(req: SecanteRequest):
     rows = []
     x_n = req.x_n
     x_n1 = req.x_n1
+    
+    f_compilada, _ = compilar_funcion(req.f, req.trig_mode)
 
     for i in range(req.max_iters):
         try:
-            fx_n = evaluar_f(req.f, x_n, req.trig_mode)
-            fx_n1 = evaluar_f(req.f, x_n1, req.trig_mode)
+            fx_n = f_compilada(x_n)
+            fx_n1 = f_compilada(x_n1)
 
             denom = fx_n - fx_n1
             if abs(denom) < req.cero_maquina:
                 return None, rows, "División por cero en la secante."
 
             x = x_n - fx_n * ((x_n - x_n1) / denom)
-            fx = evaluar_f(req.f, x, req.trig_mode)
+            fx = f_compilada(x)
             err_cal = calcular_error(x_n1, x_n, req.tipo_error)
 
             rows.append({

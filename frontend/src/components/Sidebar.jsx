@@ -1,10 +1,10 @@
 import { NavLink } from 'react-router-dom'
 import Settings from './Settings'
 import { useHistory } from '../hooks/useHistory'
-import { 
-  IconHome, IconBiseccion, IconRegulaFalsi, IconNewton, 
-  IconSecante, IconPuntoFijo, IconRegresion, IconComparacion, 
-  IconTrapecio, IconSimpson, IconHistory
+import {
+  IconHome, IconBiseccion, IconRegulaFalsi, IconNewton,
+  IconSecante, IconPuntoFijo, IconRegresion, IconComparacion,
+  IconTrapecio, IconSimpson, IconHistory, IconGaussJordan, IconMatrices
 } from './Icons'
 
 const LINKS = {
@@ -30,6 +30,12 @@ const LINKS = {
     { to: '/integracion/simpson38', label: 'Simpson 3/8', icon: <IconSimpson /> },
     { to: '/edos/euler', label: 'Euler', icon: <IconTrapecio /> },
   ]
+  ],
+  // Sistemas lineales — ambos métodos de Gauss juntos
+  sistemas: [
+    { to: '/matrices/gaussiana', label: 'Eliminación Gaussiana', icon: <IconMatrices /> },
+    { to: '/matrices/gauss-jordan', label: 'Gauss-Jordan', icon: <IconGaussJordan /> },
+  ],
 }
 
 function SidebarLink({ to, icon, label, onClick }) {
@@ -85,6 +91,8 @@ export default function Sidebar({ isOpen, onClose }) {
 
         <p className="sidebar-section-label">ECUACIONES DIFERENCIALES</p>
         {LINKS.edos.map(l => <SidebarLink key={l.to} {...l} onClick={onClose} />)}
+        <p className="sidebar-section-label">SISTEMAS LINEALES</p>
+        {LINKS.sistemas.map(l => <SidebarLink key={l.to} {...l} onClick={onClose} />)}
 
         <p className="sidebar-section-label">HERRAMIENTAS</p>
         {LINKS.herramientas.map(l => <SidebarLink key={l.to} {...l} onClick={onClose} />)}

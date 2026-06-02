@@ -56,6 +56,34 @@ class ChartDataRequest(BaseModel):
     n_points: int = 500
 
 
+class GaussianEliminationRequest(BaseModel):
+    """
+    Eliminación Gaussiana: recibe la matriz cuadrada A y el vector b.
+
+    - matrix: Lista de N listas de N floats (la matriz de coeficientes A).
+    - vector: Lista de N floats (el vector de términos independientes b).
+    """
+    matrix: List[List[float]]
+    vector: List[float]
+    cero_maquina: float = 1e-12
+
+    def validate_dimensions(self):
+        """Valida que la matriz sea cuadrada y coincida con el vector."""
+        n = len(self.matrix)
+        if n == 0:
+            raise ValueError("La matriz no puede estar vacía.")
+        if n != len(self.vector):
+            raise ValueError(
+                f"Dimensiones incompatibles: la matriz es {n}×{len(self.matrix[0])} "
+                f"pero el vector tiene {len(self.vector)} elementos."
+            )
+        for i, row in enumerate(self.matrix):
+            if len(row) != n:
+                raise ValueError(
+                    f"La fila {i+1} tiene {len(row)} columnas; se esperaban {n}."
+                )
+
+
 class IntegracionRequest(BaseModel):
     """Integración Numérica: requiere función, límites y número de intervalos."""
     f: str
@@ -76,3 +104,10 @@ class EulerRequest(BaseModel):
     max_iters: int = 100
     trig_mode: str = "rad"        # "rad" | "deg"
  
+
+
+class GaussJordanRequest(BaseModel):
+    """Gauss-Jordan: recibe la matriz A (n×n) y el vector b (n) del sistema Ax=b."""
+    A: List[List[float]]
+    b: List[float]
+    cero_maquina: float = 1e-12

@@ -5,6 +5,8 @@ Funciones de sanitización, compilación y evaluación de fórmulas
 ingresadas por el usuario, y cálculo de errores numéricos.
 """
 
+from functools import lru_cache
+import threading
 import re
 import numpy as np
 import sympy as sp
@@ -42,7 +44,10 @@ def limpiar_formula(formula_str: str) -> str:
     return f
 
 
-def compilar_funcion(formula_str: str, trig_mode: str = "Radianes"):
+_compile_lock = threading.Lock()
+
+@lru_cache(maxsize=128)
+def _compilar_funcion_interna(formula_str: str, trig_mode: str):
     """Parsea una fórmula string y retorna una función numérica evaluable."""
     formula_limpia = limpiar_formula(formula_str)
     transformaciones = (standard_transformations + (implicit_multiplication_application,))
@@ -68,6 +73,25 @@ def compilar_funcion(formula_str: str, trig_mode: str = "Radianes"):
         modulos = ['numpy']
 
     return sp.lambdify('x', expr, modules=modulos), str(expr)
+
+def compilar_funcion(formula_str: str, trig_mode: str = "Radianes"):
+    with _compile_lock:
+        return _compilar_funcion_interna(formula_str, trig_mode)
+
+
+@lru_cache(maxsize=128)
+def _obtener_derivada_str_interna(formula_str: str) -> str:
+    formula_limpia = limpiar_formula(formula_str)
+    transformaciones = (standard_transformations + (implicit_multiplication_application,))
+    try:
+        expr = parse_expr(formula_limpia, transformations=transformaciones)
+        return str(sp.diff(expr, 'x'))
+    except Exception:
+        raise ValueError("No se pudo derivar la función.")
+
+def obtener_derivada_str(formula_str: str) -> str:
+    with _compile_lock:
+        return _obtener_derivada_str_interna(formula_str)
 
 
 def evaluar_f(formula_str: str, x, trig_mode: str = "Radianes"):
