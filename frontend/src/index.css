@@ -2562,6 +2562,23 @@ html.dark .code-block {
   .two-col-equal {
     grid-template-columns: 1fr;
   }
+
+  /* Padding mínimo en pantallas muy pequeñas */
+  .main-content {
+    padding: 0.85rem;
+  }
+
+  /* Las fórmulas largas del expander hacen scroll */
+  .expander-body {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* La matriz aumentada puede hacer scroll horizontal */
+  .form-group > div[style*="overflowX"] {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 /* ─── PDF GENERATION MODE ─────────────────────────────────── */

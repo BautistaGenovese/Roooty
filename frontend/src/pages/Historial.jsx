@@ -12,7 +12,10 @@ const METHOD_ROUTES = {
   'Trapecio': '/integracion/trapecio',
   'Simpson 1/3': '/integracion/simpson13',
   'Simpson 3/8': '/integracion/simpson38',
+  'Eliminación Gaussiana': '/matrices/gaussiana',
 }
+
+const MATRIX_METHODS = ['Eliminación Gaussiana']
 
 function timeAgo(date) {
   const seconds = Math.floor((new Date() - date) / 1000)
@@ -64,10 +67,11 @@ function HistoryCard({ entry }) {
         </div>
       )}
 
-
       {entry.raiz == null && (
-        <div className="history-card-result history-card-result--fail">
-          <span className="history-result-label">No convergió</span>
+        <div className={`history-card-result${MATRIX_METHODS.includes(entry.method) ? '' : ' history-card-result--fail'}`}>
+          <span className="history-result-label">
+            {MATRIX_METHODS.includes(entry.method) ? '✓ Sistema resuelto' : 'No convergió'}
+          </span>
         </div>
       )}
 

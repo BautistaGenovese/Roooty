@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import MatrixLayout from '../components/MatrixLayout'
 import { Expander } from '../components/MethodLayout'
+import { useHistory } from '../hooks/useHistory'
 import Latex from '../components/Latex'
 import axios from 'axios'
 
@@ -22,7 +24,7 @@ const makeVector = (n) => Array(n).fill('')
 const vectorLetter = (n) => String.fromCharCode(97 + n)   // 'a'=97
 
 // ─── SUBCOMPONENTE: CONTROL NUMÉRICO +/- ─────────────────────────────────────
-function SizeControl({ value, onChange }) {
+function SizeControl({ value, onChange, onClear }) {
   const dec = () => onChange(Math.max(MIN_N, value - 1))
   const inc = () => onChange(Math.min(MAX_N, value + 1))
   const onInput = (e) => {
@@ -49,13 +51,28 @@ function SizeControl({ value, onChange }) {
         style={{ width: '64px', height: '36px', textAlign: 'center', fontWeight: 800, fontSize: '1.25rem', fontFamily: 'monospace', color: '#3b82f6', border: '2px solid #3b82f6', borderRadius: '8px', background: 'transparent', outline: 'none', MozAppearance: 'textfield' }}
       />
       <button id="gauss-size-inc" onClick={inc} disabled={value >= MAX_N} aria-label="Aumentar" style={btn(value >= MAX_N)}>+</button>
-      <span style={{ fontSize: '0.8rem', color: 'var(--slate)' }}>sistema {value}×{value} — rango [{MIN_N}, {MAX_N}]</span>
+      {onClear && (
+        <button
+          id="gauss-btn-clear"
+          onClick={onClear}
+          title="Limpiar matriz"
+          style={{
+            height: '36px', padding: '0 14px', borderRadius: '8px',
+            border: '1px solid var(--border)', background: 'var(--gray-50)',
+            color: 'var(--slate)', fontSize: '0.82rem', fontWeight: 600,
+            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px',
+            transition: 'background 0.15s, color 0.15s', flexShrink: 0,
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = 'var(--error)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'var(--gray-50)'; e.currentTarget.style.color = 'var(--slate)' }}
+        >🗑 Limpiar</button>
+      )}
     </div>
   )
 }
 
 // ─── SUBCOMPONENTE: GRID [A | b] ──────────────────────────────────────────────
-function MatrixGrid({ n, matrix, vector, onMatrixChange, onVectorChange }) {
+function MatrixGrid({ n, matrix, vector, onMatrixChange, onVectorChange, onEnterEnd }) {
   const bLetter = vectorLetter(n)
   return (
     <div style={{ overflowX: 'auto' }}>
@@ -73,14 +90,14 @@ function MatrixGrid({ n, matrix, vector, onMatrixChange, onVectorChange }) {
         </div>
         {/* Filas de inputs */}
         {Array.from({ length: n }, (_, i) => (
-          <GridRow key={i} i={i} n={n} matrix={matrix} vector={vector} onMatrixChange={onMatrixChange} onVectorChange={onVectorChange} />
+          <GridRow key={i} i={i} n={n} matrix={matrix} vector={vector} onMatrixChange={onMatrixChange} onVectorChange={onVectorChange} onEnterEnd={onEnterEnd} />
         ))}
       </div>
     </div>
   )
 }
 
-function GridRow({ i, n, matrix, vector, onMatrixChange, onVectorChange }) {
+function GridRow({ i, n, matrix, vector, onMatrixChange, onVectorChange, onEnterEnd }) {
   const handleKeyDown = (e, i, j) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -92,7 +109,10 @@ function GridRow({ i, n, matrix, vector, onMatrixChange, onVectorChange }) {
         nextJ = 0;
       }
       
-      if (nextI >= n) return;
+      if (nextI >= n) {
+        if (i === n - 1 && j === n && onEnterEnd) onEnterEnd();
+        return;
+      }
       
       const nextId = nextJ < n ? `gauss-m-${nextI}-${nextJ}` : `gauss-v-${nextI}`;
       const nextEl = document.getElementById(nextId);
@@ -124,25 +144,62 @@ function PasosRender({ pasos, n }) {
   if (filtered.length === 0) return null;
 
   return (
-    <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
-      <h3 style={{ fontSize: '1.1rem', color: 'var(--navy)', marginBottom: '1rem', fontWeight: 800 }}>Procedimiento Paso a Paso</h3>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        {filtered.map((paso, idx) => (
-          <div key={idx} style={{ background: 'var(--gray-50)', border: '1px solid var(--border)', borderRadius: '8px', padding: '1rem' }}>
-            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: paso.tipo === 'intercambio' ? '#b45309' : '#3b82f6', marginBottom: '0.75rem' }}>
-              Paso {idx + 1}: {paso.descripcion}
+    <div style={{ marginTop: '2rem' }}>
+      <Expander title="Procedimiento Paso a Paso" badge={`${filtered.length} Operaciones`}>
+        <div style={{ padding: '0.5rem 0', display: 'flex', flexDirection: 'column', gap: '1.5rem', background: 'transparent' }}>
+          {filtered.map((paso, idx) => (
+          <div key={idx} style={{ 
+            background: 'var(--white)', 
+            border: '1px solid var(--border)', 
+            borderRadius: '12px', 
+            overflow: 'hidden',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
+          }}>
+            {/* Cabecera del paso */}
+            <div style={{ 
+              background: paso.tipo === 'intercambio' ? 'linear-gradient(90deg, rgba(245,158,11,0.1), transparent)' : 'linear-gradient(90deg, rgba(59,130,246,0.08), transparent)', 
+              borderBottom: '1px solid var(--border)',
+              padding: '0.85rem 1.25rem',
+              display: 'flex', alignItems: 'center', gap: '12px'
+            }}>
+              <div style={{ 
+                background: paso.tipo === 'intercambio' ? '#f59e0b' : '#3b82f6', 
+                color: '#fff', 
+                fontWeight: 800, 
+                fontSize: '0.75rem', 
+                padding: '4px 10px', 
+                borderRadius: '20px',
+                letterSpacing: '0.5px'
+              }}>
+                PASO {idx + 1}
+              </div>
+              <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--navy)', fontFamily: 'monospace' }}>
+                {paso.descripcion}
+              </div>
             </div>
+            
+            {/* Matriz del paso */}
             {paso.matriz && (
-              <div style={{ overflowX: 'auto', background: '#fff', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border)' }}>
-                <table style={{ borderCollapse: 'collapse', margin: '0 auto', fontSize: '0.85rem', fontFamily: 'monospace' }}>
+              <div style={{ padding: '1.25rem', overflowX: 'auto', display: 'flex', justifyContent: 'center' }}>
+                <table style={{ borderCollapse: 'separate', borderSpacing: '4px', fontSize: '0.9rem', fontFamily: 'monospace' }}>
                   <tbody>
                     {paso.matriz.map((row, r_idx) => (
                       <tr key={r_idx}>
                         {row.map((val, c_idx) => {
                           const isB = c_idx === n;
+                          const isZero = Math.abs(val) < 1e-10;
                           return (
-                            <td key={c_idx} style={{ padding: '0.25rem 0.6rem', textAlign: 'right', borderLeft: isB ? '1px dashed var(--slate)' : 'none', color: isB ? '#3b82f6' : 'var(--navy)', fontWeight: isB ? 700 : 'normal' }}>
-                              {Number(val).toFixed(4)}
+                            <td key={c_idx} style={{ 
+                              padding: '0.4rem 0.8rem', 
+                              textAlign: 'right', 
+                              background: isB ? 'rgba(59,130,246,0.04)' : 'var(--gray-50)',
+                              borderLeft: isB ? '2px solid #3b82f6' : '1px solid transparent', 
+                              color: isZero ? 'var(--slate)' : (isB ? '#2563eb' : 'var(--navy)'), 
+                              fontWeight: isB && !isZero ? 700 : 'normal',
+                              borderRadius: '4px',
+                              minWidth: '60px'
+                            }}>
+                              {isZero ? '0' : (Number.isInteger(Number(val)) ? Number(val) : Number(val).toFixed(5).replace(/\.?0+$/, ''))}
                             </td>
                           );
                         })}
@@ -154,7 +211,8 @@ function PasosRender({ pasos, n }) {
             )}
           </div>
         ))}
-      </div>
+        </div>
+      </Expander>
     </div>
   )
 }
@@ -219,36 +277,28 @@ function GaussResultsPanel({ result }) {
         </div>
       </div>
 
-      {/* ── VECTOR SOLUCIÓN — Variables x₁, x₂, … xₙ ── */}
-      <div style={{ background: 'linear-gradient(135deg,rgba(59,130,246,.08),transparent)', borderRadius: '12px', padding: '1rem 1.2rem', border: '1px solid #3b82f6', marginBottom: '1rem' }}>
-        <p style={{ fontSize: '0.7rem', fontWeight: 800, color: '#3b82f6', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+      {/* ── VECTOR SOLUCIÓN — Variables x₁, x₂, … xₙ (vertical, compacto) ── */}
+      <div style={{ background: 'linear-gradient(135deg,rgba(59,130,246,.08),transparent)', borderRadius: '12px', padding: '0.85rem 1rem', border: '1px solid #3b82f6', marginBottom: '1rem' }}>
+        <p style={{ fontSize: '0.7rem', fontWeight: 800, color: '#3b82f6', marginBottom: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
           Vector Solución x
         </p>
-        {/* Grid de variables: una por columna */}
-        <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, minmax(90px, 1fr))`, gap: '8px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           {solucion.map((val, i) => (
-            <div key={i} style={{ background: 'var(--white)', border: '1px solid var(--border)', borderRadius: '10px', padding: '0.5rem 0.7rem', textAlign: 'center' }}>
-              {/* Etiqueta: xᵢ = */}
-              <div style={{ fontSize: '0.72rem', color: 'var(--slate)', marginBottom: '3px', fontFamily: 'serif', fontStyle: 'italic' }}>
-                x<sub style={{ fontStyle: 'normal', fontSize: '0.65rem' }}>{i + 1}</sub> =
-              </div>
-              {/* Valor numérico */}
-              <div style={{ fontWeight: 700, fontFamily: 'monospace', fontSize: '0.92rem', color: 'var(--navy)', wordBreak: 'break-all' }}>
-                {Number(val).toFixed(6)}
-              </div>
+            <div key={i} className="gauss-sol-row">
+              <span className="gauss-sol-label">x<sub style={{ fontStyle: 'normal', fontSize: '0.72rem' }}>{i + 1}</sub></span>
+              <span className="gauss-sol-eq">=</span>
+              <span className="gauss-sol-val">{Number.isInteger(Number(val)) ? Number(val) : Number(val).toFixed(5).replace(/\.?0+$/, '')}</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ── Pasos de eliminación (detallados) ── */}
-      {nSteps > 0 && <PasosRender pasos={pasos} n={nVars} />}
     </div>
   )
 }
 
 // ─── GENERADOR DE PDF (independiente, para casos éxito Y singular) ─────────────
-function generarPDF(resultData, n) {
+function generarPDF(resultData, n, matrix, vector) {
   try {
     const doc = new jsPDF({ format: 'letter' })
 
@@ -306,8 +356,49 @@ function generarPDF(resultData, n) {
       doc.setFontSize(14)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(22, 163, 74)
-      doc.text('Estado: Sistema Resuelto ✓', 14, currentY)
+      doc.text('Estado: Sistema Resuelto', 14, currentY)
       currentY += 10
+
+      // Matriz Inicial
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(30, 41, 59)
+      doc.text('Matriz Aumentada Inicial [A | b]:', 14, currentY)
+      currentY += 4
+
+      const matrixBody = matrix.map((row, i) => [
+        ...row.map(val => { const v = parseFloat(val); return isNaN(v) ? '0' : Number(v).toFixed(5).replace(/\.?0+$/, '') }), 
+        (() => { const v = parseFloat(vector[i]); return isNaN(v) ? '0' : Number(v).toFixed(5).replace(/\.?0+$/, '') })()
+      ])
+      
+      const matrixColStyles = {}
+      for(let c = 0; c <= n; c++) {
+        matrixColStyles[c] = { halign: 'center', font: 'courier' }
+      }
+
+      const sideMargin = Math.max(14, 105 - n * 9)
+      const headMatrix = [Array.from({ length: n }, (_, j) => `x${j + 1}`).concat(['b'])]
+
+      autoTable(doc, {
+        startY: currentY,
+        head: headMatrix,
+        body: matrixBody,
+        theme: 'grid',
+        margin: { left: sideMargin, right: sideMargin },
+        headStyles: { fillColor: [59, 130, 246], textColor: 255, fontStyle: 'bold', halign: 'center' },
+        alternateRowStyles: { fillColor: [240, 247, 255] },
+        styles: { fontSize: 10, cellPadding: 3, textColor: [30, 41, 59] },
+        columnStyles: matrixColStyles,
+        didDrawCell: function(data) {
+          if (data.column.index === n - 1) {
+            // Draw a vertical line to separate A and b
+            doc.setDrawColor(data.section === 'head' ? 255 : 59, data.section === 'head' ? 255 : 130, data.section === 'head' ? 255 : 246)
+            doc.setLineWidth(0.5)
+            doc.line(data.cell.x + data.cell.width, data.cell.y, data.cell.x + data.cell.width, data.cell.y + data.cell.height)
+          }
+        }
+      })
+      currentY = doc.lastAutoTable.finalY + 10
 
       // Tabla de solución
       doc.setFontSize(11)
@@ -328,27 +419,46 @@ function generarPDF(resultData, n) {
         head: head,
         body: body,
         theme: 'grid',
-        headStyles: { fillColor: [59, 130, 246], textColor: 255, fontStyle: 'bold' },
+        margin: { left: 35, right: 35 },
+        headStyles: { fillColor: [59, 130, 246], textColor: 255, fontStyle: 'bold', halign: 'center' },
         alternateRowStyles: { fillColor: [240, 247, 255] },
         columnStyles: {
           0: { fontStyle: 'bold', halign: 'center' },
-          1: { font: 'courier' },
+          1: { font: 'courier', halign: 'center' },
           2: { font: 'courier', halign: 'right' },
         },
       })
+      currentY = doc.lastAutoTable.finalY + 10
 
-      // Verificación
-      const finalY = doc.lastAutoTable.finalY + 8
-      doc.setFontSize(10)
-      doc.setTextColor(80, 80, 80)
-      doc.text(
-        `Método utilizado: Eliminación Gaussiana con Pivoteo Parcial (NumPy/LAPACK).`,
-        14, finalY
-      )
-      doc.text(
-        `El vector solución satisface Ax = b con error residual < 1×10⁻⁶.`,
-        14, finalY + 6
-      )
+      // Pasos
+      if (resultData.pasos && resultData.pasos.length > 0) {
+        doc.setFontSize(11)
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(30, 41, 59)
+        doc.text('Procedimiento (Operaciones):', 14, currentY)
+        currentY += 4
+        
+        const pasosBody = resultData.pasos
+          .filter(p => p.tipo !== 'solucion')
+          .map((p, idx) => [`Paso ${idx + 1}`, p.descripcion.replace(/["−]/g, '-')])
+          
+        if (pasosBody.length > 0) {
+          autoTable(doc, {
+            startY: currentY,
+            body: pasosBody,
+            theme: 'grid',
+            margin: { left: 14, right: 14 },
+            styles: { fontSize: 10, cellPadding: 3, textColor: [30, 41, 59] },
+            alternateRowStyles: { fillColor: [240, 247, 255] },
+            columnStyles: {
+              0: { fontStyle: 'bold', textColor: [59, 130, 246], cellWidth: 25, halign: 'center' },
+              1: { font: 'courier' }
+            }
+          })
+          currentY = doc.lastAutoTable.finalY + 10
+        }
+      }
+
     }
 
     doc.save(`Reporte_Gauss_${n}x${n}.pdf`)
@@ -360,11 +470,34 @@ function generarPDF(resultData, n) {
 
 // ─── PÁGINA PRINCIPAL ─────────────────────────────────────────────────────────
 export default function EliminacionGaussiana() {
+  const { push: pushHistory } = useHistory()
+  const [searchParams] = useSearchParams()
   const [n, setN] = useState(3)
   const [matrix, setMatrix] = useState(makeMatrix(3))
   const [vector, setVector] = useState(makeVector(3))
   const [resultData, setResultData] = useState(null)
   const [loading, setLoading] = useState(false)
+
+  // ── Cargar desde URL (historial "Volver a ejecutar") ───────────────────────
+  useEffect(() => {
+    const pm = searchParams.get('matrix')
+    const pv = searchParams.get('vector')
+    const pn = searchParams.get('n')
+    if (pm && pv && pn) {
+      try {
+        const parsedN = parseInt(pn, 10)
+        const parsedMatrix = JSON.parse(pm)
+        const parsedVector = JSON.parse(pv)
+        if (!isNaN(parsedN) && Array.isArray(parsedMatrix) && Array.isArray(parsedVector)) {
+          setN(parsedN)
+          setMatrix(parsedMatrix)
+          setVector(parsedVector)
+        }
+      } catch (e) {
+        // ignorar parámetros inválidos
+      }
+    }
+  }, [])
 
   // ── Cambiar N ──────────────────────────────────────────────────────────────
   function handleSizeChange(newN) {
@@ -436,6 +569,7 @@ export default function EliminacionGaussiana() {
 
   // ── Resolver ───────────────────────────────────────────────────────────────
   async function calcular() {
+    if (loading) return
     setResultData(null)
     const parsedMatrix = matrix.map(row => row.map(cell => { const v = parseFloat(cell); return isNaN(v) ? 0 : v }))
     const parsedVector = vector.map(cell => { const v = parseFloat(cell); return isNaN(v) ? 0 : v })
@@ -444,6 +578,21 @@ export default function EliminacionGaussiana() {
     try {
       const res = await axios.post('/api/matrices/gaussiana', { matrix: parsedMatrix, vector: parsedVector })
       setResultData({ ...res.data, isError: false })
+      // Serializar la matriz y vector para restaurar desde el historial
+      const matrixStr = matrix.map(row => row.map(cell => {
+        const v = parseFloat(cell); return isNaN(v) ? 0 : v
+      }))
+      const vectorStr = vector.map(cell => { const v = parseFloat(cell); return isNaN(v) ? 0 : v })
+      pushHistory({
+        method: 'Eliminación Gaussiana',
+        displayParams: { 'Tamaño': `${n}×${n}` },
+        queryParams: {
+          n: String(n),
+          matrix: JSON.stringify(matrixStr),
+          vector: JSON.stringify(vectorStr),
+        },
+        raiz: null,
+      })
     } catch (e) {
       const detail = e.response?.data?.detail
       const msg = typeof detail === 'string' ? detail : (Array.isArray(detail) ? detail.map(d => d.msg).join('; ') : 'Error inesperado al resolver el sistema.')
@@ -455,6 +604,7 @@ export default function EliminacionGaussiana() {
 
   // ─── Teoría ────────────────────────────────────────────────────────────────
   const teoria = (
+    <div className="gauss-theory-body">
     <Expander title="¿Cómo funciona la Eliminación Gaussiana?">
       <p><strong>Concepto:</strong> Transforma el sistema <Latex tex="Ax = b" /> en un sistema equivalente con <strong>Matriz Triangular Superior</strong>, que se resuelve con <strong>Sustitución Regresiva</strong>.</p>
       <br />
@@ -468,6 +618,7 @@ export default function EliminacionGaussiana() {
         <strong>Implementación:</strong> La solución se calcula con <strong>NumPy/LAPACK</strong> (factorización LU con pivoteo completo) para máxima precisión numérica. Los pasos mostrados son generados por el algoritmo manual con fines educativos.
       </div>
     </Expander>
+    </div>
   )
 
   // ─── Inputs ────────────────────────────────────────────────────────────────
@@ -475,15 +626,11 @@ export default function EliminacionGaussiana() {
     <>
       <div className="form-group">
         <label className="form-label" htmlFor="gauss-size">Tamaño del sistema (N × N)</label>
-        <SizeControl value={n} onChange={handleSizeChange} />
-      </div>
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '1rem' }}>
-        <button id="gauss-btn-example" className="btn btn-secondary" style={{ fontSize: '0.82rem', flex: 1 }} onClick={handleFillExample}>📋 Cargar ejemplo</button>
-        <button id="gauss-btn-clear" className="btn btn-secondary" style={{ fontSize: '0.82rem', flex: 1 }} onClick={handleClear}>🗑 Limpiar</button>
+        <SizeControl value={n} onChange={handleSizeChange} onClear={handleClear} />
       </div>
       <div className="form-group">
         <label className="form-label">Matriz aumentada [A | b]</label>
-        <MatrixGrid n={n} matrix={matrix} vector={vector} onMatrixChange={handleMatrixChange} onVectorChange={handleVectorChange} />
+        <MatrixGrid n={n} matrix={matrix} vector={vector} onMatrixChange={handleMatrixChange} onVectorChange={handleVectorChange} onEnterEnd={calcular} />
       </div>
     </>
   )
@@ -517,11 +664,11 @@ export default function EliminacionGaussiana() {
         
     return x`
 
-  // ─── CSS de igualdad de paneles ────────────────────────────────────────────
+  // ─── CSS de igualdad de paneles + responsive ──────────────────────────────
   const styleOverride = (
     <style>{`
       .gauss-page-wrap .two-col {
-        grid-template-columns: 1fr 1fr !important;
+        grid-template-columns: 2fr 1fr !important;
         align-items: stretch !important;
       }
       .gauss-page-wrap .two-col > .card {
@@ -529,6 +676,59 @@ export default function EliminacionGaussiana() {
       }
       #gauss-size::-webkit-outer-spin-button,
       #gauss-size::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+      /* ── Responsive: apila paneles en móvil ── */
+      @media (max-width: 900px) {
+        .gauss-page-wrap .two-col {
+          grid-template-columns: 1fr !important;
+        }
+      }
+
+      /* ── Fórmulas LaTeX: scroll horizontal en contenedor estrecho ── */
+      .gauss-theory-body .expander-body {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .gauss-theory-body .katex-display {
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 4px;
+      }
+
+      /* ── Filas del vector solución: compactas ── */
+      .gauss-sol-row {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 0.4rem 0.75rem;
+        margin-bottom: 4px;
+      }
+      .gauss-sol-label {
+        font-size: 0.85rem;
+        color: var(--slate);
+        font-family: serif;
+        font-style: italic;
+        flex-shrink: 0;
+        min-width: 28px;
+      }
+      .gauss-sol-eq {
+        color: var(--slate);
+        font-size: 0.85rem;
+        flex-shrink: 0;
+        padding: 0 6px;
+      }
+      .gauss-sol-val {
+        font-weight: 700;
+        font-family: monospace;
+        font-size: 0.92rem;
+        color: var(--navy);
+        word-break: break-all;
+        text-align: right;
+        flex: 1;
+      }
     `}</style>
   )
 
@@ -540,7 +740,7 @@ export default function EliminacionGaussiana() {
       <button
         className="btn btn-secondary"
         style={{ width: '100%' }}
-        onClick={() => generarPDF(resultData, n)}
+        onClick={() => generarPDF(resultData, n, matrix, vector)}
       >
         📄 Generar reporte en PDF
       </button>
@@ -569,6 +769,11 @@ export default function EliminacionGaussiana() {
         columns={null}
         codeRaw={codeRaw}
         hidePdf={true}
+        extra={
+          resultData && !resultData.isError && resultData.pasos ? (
+            <PasosRender pasos={resultData.pasos} n={resultData.solucion.length} />
+          ) : null
+        }
       />
     </div>
   )

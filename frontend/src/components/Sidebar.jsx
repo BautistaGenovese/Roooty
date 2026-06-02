@@ -30,7 +30,7 @@ const LINKS = {
     { to: '/integracion/simpson38', label: 'Simpson 3/8', icon: <IconSimpson /> },
   ],
   algebra: [
-    { to: '/matrices/gaussiana', label: 'Gauss. Eliminación', icon: <IconMatrices /> },
+    { to: '/matrices/gaussiana', label: 'Eliminación Gaussiana', icon: <IconMatrices /> },
   ]
 }
 
