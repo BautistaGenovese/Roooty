@@ -2,25 +2,52 @@
 Router de Matrices — Endpoints para métodos de álgebra lineal.
 
 Métodos implementados:
-  ✅ Eliminación Gaussiana (POST /api/matrices/gaussiana)
-
-TODO: Implementar endpoints para:
-  - Factorización LU
-  - Gauss-Jordan
-  - Jacobi
-  - Gauss-Seidel
+  ✅ Eliminación de Gauss-Jordan (POST /api/matrices/gauss-jordan)
+  ✅ Eliminación Gaussiana      (POST /api/matrices/gaussiana)
 """
 
 import logging
 
 from fastapi import APIRouter, HTTPException
 
-from api.models.schemas import GaussianEliminationRequest
+from api.models.schemas import GaussJordanRequest, GaussianEliminationRequest
+from api.algorithms.gauss_jordan import run_gauss_jordan
 from api.algorithms.gaussian_elimination import run_gaussian_elimination
 
 router = APIRouter(prefix="/api/matrices", tags=["Matrices"])
 logger = logging.getLogger(__name__)
 
+# ─── Gauss-Jordan ──────────────────────────────────────────────────────────────
+
+@router.post("/gauss-jordan")
+def gauss_jordan(req: GaussJordanRequest):
+    """
+    Resuelve el sistema Ax = b usando eliminación de Gauss-Jordan.
+
+    Retorna la solución, los pasos de la reducción y
+    la matriz identidad resultante.
+    """
+    n = len(req.b)
+
+    # Validar dimensiones antes de pasar al algoritmo
+    if len(req.A) != n:
+        raise HTTPException(
+            status_code=422,
+            detail=f"La matriz A tiene {len(req.A)} filas pero b tiene {n} elementos."
+        )
+    for i, row in enumerate(req.A):
+        if len(row) != n:
+            raise HTTPException(
+                status_code=422,
+                detail=f"La fila {i+1} de A tiene {len(row)} columnas; se esperaban {n}."
+            )
+
+    result = run_gauss_jordan(req.A, req.b, req.cero_maquina)
+
+    if result["error"]:
+        raise HTTPException(status_code=400, detail=result["error"])
+
+    return result
 
 # ─── Eliminación Gaussiana ─────────────────────────────────────────────────────
 
@@ -55,13 +82,11 @@ def api_gaussian_elimination(req: GaussianEliminationRequest):
         )
 
         # — Convertir explícitamente a listas Python puras antes de pasar —
-        # Esto elimina cualquier tipo interno de Pydantic v2 que pueda
-        # interferir con la conversión a numpy.
         raw_matrix = [[float(cell) for cell in row] for row in req.matrix]
         raw_vector = [float(v) for v in req.vector]
 
         # — Ejecutar el algoritmo —
-        solucion, pasos, error = run_gaussian_elimination(raw_matrix, raw_vector)
+        solucion, pasos, error = run_gaussian_elimination(raw_matrix, raw_vector, req.cero_maquina)
 
         if solucion is None:
             logger.info("Sistema sin solución única: %s", error)

@@ -12,6 +12,7 @@ import {
   Waves,
   Settings,
   History,
+  Grid,
   Grid3x3
 } from 'lucide-react';
 
@@ -33,4 +34,7 @@ export const IconTrapecio = (props) => <AreaChart {...iconDefaults} {...props} /
 export const IconSimpson = (props) => <Waves {...iconDefaults} {...props} />;
 export const IconSettings = (props) => <Settings {...iconDefaults} {...props} />;
 export const IconHistory = (props) => <History {...iconDefaults} {...props} />;
+// Gauss-Jordan (ours)
+export const IconGaussJordan = (props) => <Grid {...iconDefaults} {...props} />;
+// Eliminación Gaussiana (teammate)
 export const IconMatrices = (props) => <Grid3x3 {...iconDefaults} {...props} />;
