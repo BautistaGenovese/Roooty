@@ -28,6 +28,8 @@ const LINKS = {
     { to: '/integracion/trapecio', label: 'Trapecio', icon: <IconTrapecio /> },
     { to: '/integracion/simpson13', label: 'Simpson 1/3', icon: <IconSimpson /> },
     { to: '/integracion/simpson38', label: 'Simpson 3/8', icon: <IconSimpson /> },
+    { to: '/edos/euler', label: 'Euler', icon: <IconTrapecio /> },
+  ]
   ],
   // Sistemas lineales — ambos métodos de Gauss juntos
   sistemas: [
@@ -87,6 +89,8 @@ export default function Sidebar({ isOpen, onClose }) {
         <p className="sidebar-section-label">INTEGRACIÓN NUMÉRICA</p>
         {LINKS.integracion.map(l => <SidebarLink key={l.to} {...l} onClick={onClose} />)}
 
+        <p className="sidebar-section-label">ECUACIONES DIFERENCIALES</p>
+        {LINKS.edos.map(l => <SidebarLink key={l.to} {...l} onClick={onClose} />)}
         <p className="sidebar-section-label">SISTEMAS LINEALES</p>
         {LINKS.sistemas.map(l => <SidebarLink key={l.to} {...l} onClick={onClose} />)}
 
