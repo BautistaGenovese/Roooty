@@ -186,12 +186,12 @@ export default function Comparacion() {
         (async () => {
           const start = performance.now()
           const res = await apiPost(epA, plA)
-          return { res, t: performance.now() - start }
+          return { res, t: res.time_ms ?? (performance.now() - start) }
         })(),
         (async () => {
           const start = performance.now()
           const res = await apiPost(epB, plB)
-          return { res, t: performance.now() - start }
+          return { res, t: res.time_ms ?? (performance.now() - start) }
         })()
       ])
 

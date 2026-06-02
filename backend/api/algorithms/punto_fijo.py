@@ -1,16 +1,18 @@
 """Método de Punto Fijo para búsqueda de raíces."""
 
-from api.utils.math_helpers import evaluar_f, calcular_error
+from api.utils.math_helpers import compilar_funcion, calcular_error
 from api.models.schemas import PuntoFijoRequest
 
 
 def run_punto_fijo(req: PuntoFijoRequest):
     rows = []
     x_n = req.x_0
+    
+    f_compilada, _ = compilar_funcion(req.f, req.trig_mode)
 
     for i in range(req.max_iters):
         try:
-            x_n1 = evaluar_f(req.f, x_n, req.trig_mode)
+            x_n1 = f_compilada(x_n)
             if isinstance(x_n1, complex):
                 return None, rows, "Resultado complejo. El método divergió."
             err_cal = calcular_error(x_n1, x_n, req.tipo_error)

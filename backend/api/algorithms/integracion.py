@@ -15,7 +15,7 @@ Cada función retorna una tupla (resultado, puntos, curva_f, aproximacion):
 """
 
 import numpy as np
-from api.utils.math_helpers import evaluar_f, compilar_funcion
+from api.utils.math_helpers import compilar_funcion
 
 
 # ─── AUXILIAR: curva densa de f(x) ────────────────────────────────────────────
@@ -133,10 +133,15 @@ def metodo_trapecio(f_str: str, a: float, b: float, n: int,
 
     h  = (b - a) / n
     xs = [a + i * h for i in range(n + 1)]
+    
+    f_compilada, _ = compilar_funcion(f_str, trig_mode)
 
     puntos, fxs = [], []
     for xi in xs:
-        fxi = float(evaluar_f(f_str, xi, trig_mode))
+        try:
+            fxi = float(f_compilada(xi))
+        except Exception:
+            fxi = 0.0
         puntos.append({"x": round(xi, 10), "fx": round(fxi, 10)})
         fxs.append(fxi)
 
@@ -173,10 +178,15 @@ def metodo_simpson_13(f_str: str, a: float, b: float, n: int,
 
     h  = (b - a) / n
     xs = [a + i * h for i in range(n + 1)]
+    
+    f_compilada, _ = compilar_funcion(f_str, trig_mode)
 
     puntos, fxs = [], []
     for xi in xs:
-        fxi = float(evaluar_f(f_str, xi, trig_mode))
+        try:
+            fxi = float(f_compilada(xi))
+        except Exception:
+            fxi = 0.0
         puntos.append({"x": round(xi, 10), "fx": round(fxi, 10)})
         fxs.append(fxi)
 
@@ -216,10 +226,15 @@ def metodo_simpson_38(f_str: str, a: float, b: float, n: int,
 
     h  = (b - a) / n
     xs = [a + i * h for i in range(n + 1)]
+    
+    f_compilada, _ = compilar_funcion(f_str, trig_mode)
 
     puntos, fxs = [], []
     for xi in xs:
-        fxi = float(evaluar_f(f_str, xi, trig_mode))
+        try:
+            fxi = float(f_compilada(xi))
+        except Exception:
+            fxi = 0.0
         puntos.append({"x": round(xi, 10), "fx": round(fxi, 10)})
         fxs.append(fxi)
 
