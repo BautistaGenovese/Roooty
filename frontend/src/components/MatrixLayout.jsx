@@ -27,7 +27,7 @@ export function MatrixResultsPanel({
 }
 
 // ─── MATRIX LAYOUT ──────────────────────────────────────────────────────────────
-export default function MatrixLayout({ title, badge, teoria, inputs, onCalcular, result, codeRaw, iteraciones, columns, extra }) {
+export default function MatrixLayout({ title, badge, teoria, inputs, onCalcular, result, resultContent, codeRaw, iteraciones, columns, extra, hidePdf }) {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = () => {
@@ -52,10 +52,18 @@ export default function MatrixLayout({ title, badge, teoria, inputs, onCalcular,
       doc.text(`Método: ${title}`, 14, 30);
       
       if (iteraciones && columns) {
-        const head = [ ['Iter', ...columns.map(c => c.label)] ];
+        // Si la primera columna ya es identificadora (variable name), omitir 'Iter'
+        const firstColIsLabel = iteraciones.length > 0 && typeof iteraciones[0][columns[0]?.key] === 'string';
+        const head = firstColIsLabel
+          ? [ columns.map(c => c.label) ]
+          : [ ['#', ...columns.map(c => c.label)] ];
         const body = iteraciones.map((row, i) => [
-          i,
-          ...columns.map(c => row[c.key] != null ? (typeof row[c.key] === 'number' ? row[c.key].toFixed(6) : row[c.key]) : '—')
+          ...(firstColIsLabel ? [] : [i]),
+          ...columns.map(c => {
+            const v = row[c.key];
+            if (v == null) return '—';
+            return typeof v === 'number' ? v.toFixed(6) : String(v);
+          })
         ]);
 
         autoTable(doc, {
@@ -63,6 +71,7 @@ export default function MatrixLayout({ title, badge, teoria, inputs, onCalcular,
           head: head,
           body: body,
           theme: 'grid',
+          headStyles: { fillColor: [59, 130, 246] },
         });
       }
       doc.save(`Reporte_${title || 'Matriz'}.pdf`);
@@ -101,9 +110,13 @@ export default function MatrixLayout({ title, badge, teoria, inputs, onCalcular,
         </div>
 
         {/* RIGHT — RESULTS */}
+        {/* resultContent toma prioridad: permite que páginas como Gauss inyecten
+            su propio panel sin que MatrixResultsPanel pise el renderizado. */}
         <div className="card">
-          {result ? (
-            <MatrixResultsPanel result={result} iteraciones={iteraciones} columns={columns} />
+          {(resultContent != null || result != null) ? (
+            resultContent != null
+              ? resultContent
+              : <MatrixResultsPanel result={result} iteraciones={iteraciones} columns={columns} />
           ) : (
             <div className="empty-panel">
               <div className="empty-panel-icon"></div>
@@ -112,8 +125,8 @@ export default function MatrixLayout({ title, badge, teoria, inputs, onCalcular,
               <div className="empty-panel-badge">LISTO PARA CALCULAR</div>
             </div>
           )}
-          
-          {result && (
+
+          {(resultContent != null || result != null) && !hidePdf && (
             <div style={{ marginTop: '1rem' }}>
               <button className="btn btn-secondary" onClick={handleGeneratePdf}>
                 Generar reporte en PDF

@@ -4,7 +4,7 @@ import { useHistory } from '../hooks/useHistory'
 import { 
   IconHome, IconBiseccion, IconRegulaFalsi, IconNewton, 
   IconSecante, IconPuntoFijo, IconRegresion, IconComparacion, 
-  IconTrapecio, IconSimpson, IconHistory
+  IconTrapecio, IconSimpson, IconHistory, IconMatrices
 } from './Icons'
 
 const LINKS = {
@@ -28,6 +28,9 @@ const LINKS = {
     { to: '/integracion/trapecio', label: 'Trapecio', icon: <IconTrapecio /> },
     { to: '/integracion/simpson13', label: 'Simpson 1/3', icon: <IconSimpson /> },
     { to: '/integracion/simpson38', label: 'Simpson 3/8', icon: <IconSimpson /> },
+  ],
+  algebra: [
+    { to: '/matrices/gaussiana', label: 'Eliminación Gaussiana', icon: <IconMatrices /> },
   ]
 }
 
@@ -81,6 +84,9 @@ export default function Sidebar({ isOpen, onClose }) {
 
         <p className="sidebar-section-label">INTEGRACIÓN NUMÉRICA</p>
         {LINKS.integracion.map(l => <SidebarLink key={l.to} {...l} onClick={onClose} />)}
+
+        <p className="sidebar-section-label">ÁLGEBRA LINEAL</p>
+        {LINKS.algebra.map(l => <SidebarLink key={l.to} {...l} onClick={onClose} />)}
 
         <p className="sidebar-section-label">HERRAMIENTAS</p>
         {LINKS.herramientas.map(l => <SidebarLink key={l.to} {...l} onClick={onClose} />)}
