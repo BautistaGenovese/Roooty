@@ -42,7 +42,7 @@ def gauss_jordan(req: GaussJordanRequest):
                 detail=f"La fila {i+1} de A tiene {len(row)} columnas; se esperaban {n}."
             )
 
-    result = run_gauss_jordan(req.A, req.b)
+    result = run_gauss_jordan(req.A, req.b, req.cero_maquina)
 
     if result["error"]:
         raise HTTPException(status_code=400, detail=result["error"])
@@ -86,7 +86,7 @@ def api_gaussian_elimination(req: GaussianEliminationRequest):
         raw_vector = [float(v) for v in req.vector]
 
         # — Ejecutar el algoritmo —
-        solucion, pasos, error = run_gaussian_elimination(raw_matrix, raw_vector)
+        solucion, pasos, error = run_gaussian_elimination(raw_matrix, raw_vector, req.cero_maquina)
 
         if solucion is None:
             logger.info("Sistema sin solución única: %s", error)

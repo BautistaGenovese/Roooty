@@ -65,6 +65,7 @@ class GaussianEliminationRequest(BaseModel):
     """
     matrix: List[List[float]]
     vector: List[float]
+    cero_maquina: float = 1e-12
 
     def validate_dimensions(self):
         """Valida que la matriz sea cuadrada y coincida con el vector."""
@@ -96,3 +97,4 @@ class GaussJordanRequest(BaseModel):
     """Gauss-Jordan: recibe la matriz A (n×n) y el vector b (n) del sistema Ax=b."""
     A: List[List[float]]
     b: List[float]
+    cero_maquina: float = 1e-12

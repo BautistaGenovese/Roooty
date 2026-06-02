@@ -14,10 +14,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Umbral bajo el cual un pivote se considera numéricamente cero (sistema singular)
-_EPSILON = 1e-12
-
-
-def run_gaussian_elimination(matrix: list[list[float]], vector: list[float]):
+def run_gaussian_elimination(matrix: list[list[float]], vector: list[float], cero_maquina: float = 1e-12):
     """
     Resuelve el sistema Ax = b usando Eliminación Gaussiana con Pivoteo Parcial.
 
@@ -60,7 +57,7 @@ def run_gaussian_elimination(matrix: list[list[float]], vector: list[float]):
             })
 
         # ── Verificar singularidad ─────────────────────────────────────────────
-        if abs(aug[k][k]) < _EPSILON:
+        if abs(aug[k][k]) < cero_maquina:
             return None, pasos, (
                 f"El sistema es singular o indeterminado: "
                 f"el pivote en la columna {k + 1} es cero (≈ 0). "
@@ -71,7 +68,7 @@ def run_gaussian_elimination(matrix: list[list[float]], vector: list[float]):
         # ── Paso c: eliminar elementos debajo del pivote ──────────────────────
         for i in range(k + 1, n):
             # Si el elemento ya es cero, no hace falta operar
-            if abs(aug[i][k]) < _EPSILON:
+            if abs(aug[i][k]) < cero_maquina:
                 continue
 
             m = aug[i][k] / aug[k][k]
@@ -103,7 +100,7 @@ def run_gaussian_elimination(matrix: list[list[float]], vector: list[float]):
         solucion[i] = (aug[i][n] - suma_conocidos) / aug[i][i]
 
         # Suprimir ruido numérico: valores extremadamente pequeños → 0
-        if abs(solucion[i]) < _EPSILON:
+        if abs(solucion[i]) < cero_maquina:
             solucion[i] = 0.0
 
     pasos.append({

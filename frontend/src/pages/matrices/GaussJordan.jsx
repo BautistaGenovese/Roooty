@@ -1,207 +1,31 @@
-import React, { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import axios from 'axios'
 import MatrixLayout from '../../components/MatrixLayout'
 import { Expander } from '../../components/MethodLayout'
 import Latex from '../../components/Latex'
 import { useHistory } from '../../hooks/useHistory'
+import { useSettings } from '../../hooks/useSettings'
 
-// ─── Constantes ────────────────────────────────────────────────────────────────
-const MIN_SIZE = 2
-const MAX_SIZE = 6
+import {
+  MIN_N, MAX_N, makeMatrix, makeVector,
+  SizeControl, MatrixGrid, PasosRender,
+  GaussResultsPanel, generarPDF,
+} from '../../components/GaussShared'
 
-// ─── Helpers ───────────────────────────────────────────────────────────────────
-function makeMatrix(n) {
-  return Array.from({ length: n }, () => Array(n).fill(0))
-}
-function makeVector(n) {
-  return Array(n).fill(0)
-}
-// 0 shows as '' (placeholder visible), any other number as string
-const toDisplay = v => (v === 0 ? '' : String(v))
-
-// ─── Augmented Input Grid ─────────────────────────────────────────────────────
-// Renders [A | b] as one unified grid so Enter traverses the full row:
-//   A[i][0] → A[i][1] → ... → A[i][n-1] → b[i] → A[i+1][0] → ...
-function AugmentedInputGrid({ n, A, b, onChangeA, onChangeB }) {
-  // Refs keyed: "A-i-j" for matrix cells, "b-i" for vector cells
-  const inputRefs = useRef({})
-
-  // Local display state — reset via React key (parent increments resetKey)
-  const [dispA, setDispA] = useState(() => A.map(row => row.map(toDisplay)))
-  const [dispB, setDispB] = useState(() => b.map(toDisplay))
-
-  // Re-sync when n changes (resize without full remount)
-  useEffect(() => {
-    setDispA(A.map(row => row.map(toDisplay)))
-    setDispB(b.map(toDisplay))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [n])
-
-  // ── Focus helper ──────────────────────────────────────────────────────────────
-  // col: 0..n-1 = matrix A columns, col === n = b column
-  function moveFocus(row, col) {
-    const key = col === n ? `b-${row}` : `A-${row}-${col}`
-    inputRefs.current[key]?.focus()
-  }
-
-  function handleKeyDown(row, col, e) {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      if (col < n - 1) {
-        moveFocus(row, col + 1)          // next A column
-      } else if (col === n - 1) {
-        moveFocus(row, n)                 // jump to b[row]
-      } else {
-        // col === n  →  b column, go to first A cell of next row
-        if (row + 1 < n) moveFocus(row + 1, 0)
-      }
-      return
-    }
-
-    // Backspace on an empty cell → move backwards (reverse of Enter)
-    if (e.key === 'Backspace' && e.target.value === '') {
-      e.preventDefault()
-      if (col === n) {
-        // b column → last A column of same row
-        moveFocus(row, n - 1)
-      } else if (col > 0) {
-        // A column > 0 → previous A column
-        moveFocus(row, col - 1)
-      } else {
-        // A column 0 → b column of previous row
-        if (row > 0) moveFocus(row - 1, n)
-      }
-    }
-  }
-
-  // ── Change handlers ───────────────────────────────────────────────────────────
-  function handleChangeA(i, j, raw) {
-    raw = raw.replace(',', '.')
-    if (!/^-?\d*\.?\d*$/.test(raw)) return
-
-    setDispA(prev => {
-      const d = prev.map(r => [...r])
-      d[i][j] = raw
-      return d
-    })
-    const v = raw === '' || raw === '-' ? 0 : parseFloat(raw)
-    if (!isNaN(v)) onChangeA(i, j, v)
-  }
-
-  function handleChangeB(i, raw) {
-    raw = raw.replace(',', '.')
-    if (!/^-?\d*\.?\d*$/.test(raw)) return
-
-    setDispB(prev => { const d = [...prev]; d[i] = raw; return d })
-    const v = raw === '' || raw === '-' ? 0 : parseFloat(raw)
-    if (!isNaN(v)) onChangeB(i, v)
-  }
-
-  // ── Shared input style ────────────────────────────────────────────────────────
-  const inputStyle = {
-    textAlign: 'center',
-    minWidth: 0,
-    padding: '6px 4px',
-  }
-
-  return (
-    <div>
-      {/* Column headers */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: `repeat(${n}, 1fr) 24px 80px`,
-        gap: '6px',
-        marginBottom: '4px',
-      }}>
-        {/* Header for A */}
-        <div style={{ gridColumn: `1 / span ${n}`, textAlign: 'center' }}>
-          <span className="form-label" style={{ fontSize: '0.75rem', margin: 0 }}>
-            Matriz A ({n}×{n})
-          </span>
-        </div>
-        {/* Spacer for divider */}
-        <div />
-        {/* Header for b */}
-        <div style={{ textAlign: 'center' }}>
-          <span className="form-label" style={{ fontSize: '0.75rem', margin: 0 }}>
-            b
-          </span>
-        </div>
-      </div>
-
-      {/* Rows: A cells + divider + b cell */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: `repeat(${n}, 1fr) 24px 80px`,
-        gap: '6px',
-        alignItems: 'center',
-      }}>
-        {Array.from({ length: n }, (_, i) => (
-          <React.Fragment key={i}>
-            {/* A[i][0..n-1] */}
-            {Array.from({ length: n }, (_, j) => (
-              <input
-                key={`A-${i}-${j}`}
-                ref={el => { inputRefs.current[`A-${i}-${j}`] = el }}
-                type="text"
-                inputMode="decimal"
-                className="form-number"
-                style={inputStyle}
-                value={dispA[i]?.[j] ?? ''}
-                placeholder="0"
-                onChange={e => handleChangeA(i, j, e.target.value)}
-                onKeyDown={e => handleKeyDown(i, j, e)}
-              />
-            ))}
-
-            {/* Visual divider */}
-            <div style={{
-              textAlign: 'center',
-              color: 'var(--blue)',
-              fontWeight: 700,
-              fontSize: '1.2rem',
-              userSelect: 'none',
-              opacity: 0.6,
-            }}>
-              |
-            </div>
-
-            {/* b[i] */}
-            <input
-              key={`b-${i}`}
-              ref={el => { inputRefs.current[`b-${i}`] = el }}
-              type="text"
-              inputMode="decimal"
-              className="form-number"
-              style={{ ...inputStyle, background: 'rgba(59,130,246,0.06)', borderColor: 'var(--blue)' }}
-              value={dispB[i] ?? ''}
-              placeholder="0"
-              onChange={e => handleChangeB(i, e.target.value)}
-              onKeyDown={e => handleKeyDown(i, n, e)}
-            />
-          </React.Fragment>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// ─── PÁGINA: GAUSS-JORDAN ───────────────────────────────────────────────────
 export default function GaussJordan() {
   const { push: pushHistory } = useHistory()
+  const { settings } = useSettings()
   const [searchParams] = useSearchParams()
 
   const [n, setN] = useState(3)
-  const [A, setA] = useState(makeMatrix(3))
-  const [b, setBvec] = useState(makeVector(3))
-  const [result, setResult] = useState(null)
-  const [error, setError] = useState(null)
+  const [matrix, setMatrix] = useState(makeMatrix(3))
+  const [vector, setVector] = useState(makeVector(3))
+  const [resultData, setResultData] = useState(null)
   const [loading, setLoading] = useState(false)
-  const [resetKey, setResetKey] = useState(0) // forces AugmentedInputGrid re-mount
 
-  // ── Restore from history URL params on mount ──────────────────────────────────
+  // ── Restaurar desde historial URL params ──────────────────────────────
   useEffect(() => {
     const qA = searchParams.get('matA')
     const qb = searchParams.get('vecB')
@@ -209,71 +33,61 @@ export default function GaussJordan() {
       try {
         const parsedA = JSON.parse(qA)
         const parsedB = JSON.parse(qb)
-        setN(parsedB.length)
-        setA(parsedA)
-        setBvec(parsedB)
-        setResetKey(k => k + 1)
-      } catch (_) { /* ignore malformed params */ }
+        const size = parsedB.length
+        setN(size)
+        // Convertir a strings para el MatrixGrid
+        setMatrix(parsedA.map(row => row.map(v => v === 0 ? '' : String(v))))
+        setVector(parsedB.map(v => v === 0 ? '' : String(v)))
+      } catch (_) { /* ignorar params malformados */ }
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Resize ────────────────────────────────────────────────────────────────────
-  function resizeTo(newN) {
-    setN(newN)
-    setA(prev => {
-      const m = makeMatrix(newN)
-      for (let i = 0; i < Math.min(newN, prev.length); i++)
-        for (let j = 0; j < Math.min(newN, prev[i].length); j++)
-          m[i][j] = prev[i][j]
-      return m
-    })
-    setBvec(prev => {
-      const v = makeVector(newN)
-      for (let i = 0; i < Math.min(newN, prev.length); i++) v[i] = prev[i]
-      return v
-    })
-    setResult(null)
-    setError(null)
-    setResetKey(k => k + 1)
+  // ── Cambiar tamaño ────────────────────────────────────────────────────
+  function handleSizeChange(newN) {
+    const size = Math.max(MIN_N, Math.min(MAX_N, Number(newN)))
+    setN(size)
+    setMatrix(prev => Array.from({ length: size }, (_, i) => Array.from({ length: size }, (_, j) => prev[i]?.[j] ?? '')))
+    setVector(prev => Array.from({ length: size }, (_, i) => prev[i] ?? ''))
+    setResultData(null)
   }
 
-  // ── Clear all ─────────────────────────────────────────────────────────────────
-  function clearAll() {
-    setA(makeMatrix(n))
-    setBvec(makeVector(n))
-    setResult(null)
-    setError(null)
-    setResetKey(k => k + 1)
+  // ── Editar celdas ─────────────────────────────────────────────────────
+  function handleMatrixChange(i, j, val) {
+    setMatrix(prev => { const c = prev.map(r => [...r]); c[i][j] = val; return c })
+  }
+  function handleVectorChange(i, val) {
+    setVector(prev => { const c = [...prev]; c[i] = val; return c })
   }
 
-  // ── Update callbacks ──────────────────────────────────────────────────────────
-  function updateA(i, j, v) {
-    setA(prev => { const m = prev.map(r => [...r]); m[i][j] = v; return m })
-  }
-  function updateB(i, v) {
-    setBvec(prev => { const vec = [...prev]; vec[i] = v; return vec })
+  // ── Limpiar ───────────────────────────────────────────────────────────
+  function handleClear() {
+    setMatrix(makeMatrix(n))
+    setVector(makeVector(n))
+    setResultData(null)
   }
 
-  // ── Preset example ────────────────────────────────────────────────────────────
-  // System: 2x+y-z=8, -3x-y+2z=-11, -2x+y+2z=-3  →  x=[2, 3, -1]
+  // ── Ejemplo precargado ────────────────────────────────────────────────
   function loadPreset() {
     setN(3)
-    setA([[2, 1, -1], [-3, -1, 2], [-2, 1, 2]])
-    setBvec([8, -11, -3])
-    setResult(null)
-    setError(null)
-    setResetKey(k => k + 1)
+    setMatrix([['2', '1', '-1'], ['-3', '-1', '2'], ['-2', '1', '2']])
+    setVector(['8', '-11', '-3'])
+    setResultData(null)
   }
 
-  // ── Calculate ─────────────────────────────────────────────────────────────────
+  // ── Calcular ──────────────────────────────────────────────────────────
   async function calcular() {
+    if (loading) return
+    setResultData(null)
+
+    // Parsear strings → números para la API
+    const A = matrix.map(row => row.map(cell => { const v = parseFloat(cell); return isNaN(v) ? 0 : v }))
+    const b = vector.map(cell => { const v = parseFloat(cell); return isNaN(v) ? 0 : v })
+
     setLoading(true)
-    setError(null)
-    setResult(null)
     try {
-      const res = await axios.post('/api/matrices/gauss-jordan', { A, b })
+      const res = await axios.post('/api/matrices/gauss-jordan', { A, b, cero_maquina: settings.ceroMaquina })
       const data = res.data
-      setResult(data)
+      setResultData({ ...data, isError: false })
 
       pushHistory({
         method: 'Gauss-Jordan',
@@ -290,129 +104,58 @@ export default function GaussJordan() {
           : null,
       })
     } catch (e) {
-      setError(e.response?.data?.detail || 'Error al calcular. Verifica los coeficientes.')
+      const detail = e.response?.data?.detail
+      const msg = typeof detail === 'string' ? detail : 'Error al calcular. Verifica los coeficientes.'
+      setResultData({ isError: true, errorMsg: msg })
     } finally {
       setLoading(false)
     }
   }
 
-  // ── Theory ────────────────────────────────────────────────────────────────────
+  // ─── Teoría ───────────────────────────────────────────────────────────
   const teoria = (
-    <Expander title="¿Cómo funciona Gauss-Jordan?">
-      <p>
-        <strong>Objetivo:</strong> Resolver el sistema <Latex tex="Ax = b" /> transformando
-        la matriz aumentada <Latex tex="[A \mid b]" /> en la forma <Latex tex="[I \mid x]" />,
-        donde <Latex tex="I" /> es la matriz identidad.
-      </p>
-      <br />
-      <ol style={{ paddingLeft: '1.2rem', lineHeight: 2 }}>
-        <li>Seleccionar el <strong>pivote</strong> con mayor valor absoluto (pivoteo parcial).</li>
-        <li><strong>Normalizar</strong> la fila pivote:&nbsp;
-          <Latex tex={String.raw`F_i \leftarrow \frac{F_i}{a_{ii}}`} display />
-        </li>
-        <li><strong>Eliminar</strong> en todas las demás filas:&nbsp;
-          <Latex tex={String.raw`F_j \leftarrow F_j - a_{ji} \cdot F_i`} display />
-        </li>
-        <li>Repetir hasta obtener la identidad.</li>
-      </ol>
-      <div className="alert alert-info" style={{ marginTop: '0.8rem' }}>
-        <strong>Diferencia con Gauss:</strong> elimina en <em>ambas</em> direcciones,
-        sin necesidad de sustitución regresiva.
-      </div>
-    </Expander>
-  )
-
-  // ── Inputs ────────────────────────────────────────────────────────────────────
-  // Local display string so the user can clear the field and retype
-  const [nDisplay, setNDisplay] = useState(String(n))
-
-  const sizeInput = (
-    <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-      <label className="form-label" style={{ margin: 0 }}>Dimensión N</label>
-
-      {/* Stepper row */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-        {/* Decrement */}
-        <button
-          className="btn btn-secondary"
-          style={{ padding: '4px 10px', fontSize: '1rem', fontWeight: 700, lineHeight: 1 }}
-          disabled={n <= MIN_SIZE}
-          onClick={() => { const next = n - 1; setNDisplay(String(next)); resizeTo(next) }}
-        >−</button>
-
-        {/* Free-type input */}
-        <input
-          type="text"
-          inputMode="numeric"
-          className="form-number"
-          value={nDisplay}
-          style={{ width: '52px', textAlign: 'center', padding: '5px 6px' }}
-          onChange={e => {
-            const raw = e.target.value
-            setNDisplay(raw)
-            const val = parseInt(raw, 10)
-            if (!isNaN(val) && val >= MIN_SIZE && val <= MAX_SIZE) resizeTo(val)
-          }}
-          onBlur={() => {
-            // If the user leaves the field with an out-of-range or empty value, snap back
-            const val = parseInt(nDisplay, 10)
-            if (isNaN(val) || val < MIN_SIZE || val > MAX_SIZE) setNDisplay(String(n))
-          }}
-        />
-
-        {/* Increment */}
-        <button
-          className="btn btn-secondary"
-          style={{ padding: '4px 10px', fontSize: '1rem', fontWeight: 700, lineHeight: 1 }}
-          disabled={n >= MAX_SIZE}
-          onClick={() => { const next = n + 1; setNDisplay(String(next)); resizeTo(next) }}
-        >+</button>
-      </div>
-
-      <span style={{ fontSize: '0.75rem', color: 'var(--slate)' }}>
-        × {n} &nbsp;·&nbsp; mín {MIN_SIZE}, máx {MAX_SIZE}
-      </span>
+    <div className="gauss-theory-body">
+      <Expander title="¿Cómo funciona Gauss-Jordan?">
+        <p>
+          <strong>Objetivo:</strong> Resolver el sistema <Latex tex="Ax = b" /> transformando
+          la matriz aumentada <Latex tex="[A \mid b]" /> en la forma <Latex tex="[I \mid x]" />,
+          donde <Latex tex="I" /> es la matriz identidad.
+        </p>
+        <br />
+        <ol style={{ paddingLeft: '1.2rem', lineHeight: 2 }}>
+          <li>Seleccionar el <strong>pivote</strong> con mayor valor absoluto (pivoteo parcial).</li>
+          <li><strong>Normalizar</strong> la fila pivote:&nbsp;
+            <Latex tex={String.raw`F_i \leftarrow \frac{F_i}{a_{ii}}`} display />
+          </li>
+          <li><strong>Eliminar</strong> en todas las demás filas:&nbsp;
+            <Latex tex={String.raw`F_j \leftarrow F_j - a_{ji} \cdot F_i`} display />
+          </li>
+          <li>Repetir hasta obtener la identidad.</li>
+        </ol>
+        <div className="alert alert-info" style={{ marginTop: '0.8rem' }}>
+          <strong>Diferencia con Gauss:</strong> elimina en <em>ambas</em> direcciones,
+          sin necesidad de sustitución regresiva.
+        </div>
+      </Expander>
     </div>
   )
 
+  // ─── Inputs ───────────────────────────────────────────────────────────
   const inputs = (
     <>
-      {sizeInput}
-
-      <p style={{ fontSize: '0.78rem', color: 'var(--slate)', margin: '0.4rem 0 0.8rem' }}>
-        Ingresa fila por fila.{' '}
-        <kbd style={{ fontSize: '0.73rem', padding: '1px 5px', borderRadius: 4, border: '1px solid var(--border)', background: 'var(--gray-50)' }}>
-          Enter
-        </kbd>{' '}
-        recorre toda la fila incluyendo b.
-      </p>
-
-      <AugmentedInputGrid
-        key={resetKey}
-        n={n}
-        A={A}
-        b={b}
-        onChangeA={updateA}
-        onChangeB={updateB}
-      />
-
-      {/* Action buttons */}
-      <div style={{ display: 'flex', gap: '8px', marginTop: '0.8rem', flexWrap: 'wrap' }}>
-        <button
-          className="btn btn-secondary"
-          style={{ fontSize: '0.8rem', color: 'var(--error)', borderColor: 'var(--error)' }}
-          onClick={clearAll}
-        >
-          🗑️ Limpiar todo
-        </button>
+      <SizeControl value={n} onChange={handleSizeChange} onClear={handleClear} />
+      <div className="form-group">
+        <label className="form-label">Matriz aumentada [A | b]</label>
+        <MatrixGrid n={n} matrix={matrix} vector={vector} onMatrixChange={handleMatrixChange} onVectorChange={handleVectorChange} onEnterEnd={calcular} />
       </div>
-
-      {error && <div className="alert alert-error" style={{ marginTop: '1rem' }}>{error}</div>}
     </>
   )
 
-  // ── Python code ───────────────────────────────────────────────────────────────
-  const code = `def gauss_jordan(A, b):
+  // ─── Código Python ────────────────────────────────────────────────────
+  const formatMatrixArray = (m) => `[\n${m.map(row => `        [${row.map(v => v || '0').join(', ')}]`).join(',\n')}\n    ]`
+  const formatVectorArray = (v) => `[${v.map(val => val || '0').join(', ')}]`
+
+  const code = `def gauss_jordan(A, b, cero_maquina=1e-12):
     n = len(b)
     aug = [A[i][:] + [b[i]] for i in range(n)]
 
@@ -422,7 +165,7 @@ export default function GaussJordan() {
         aug[col], aug[max_row] = aug[max_row], aug[col]
 
         pivot = aug[col][col]
-        if abs(pivot) < 1e-12:
+        if abs(pivot) < cero_maquina:
             raise ValueError("Sistema singular o sin solucion unica")
 
         # Normalizar fila pivote
@@ -436,20 +179,70 @@ export default function GaussJordan() {
             aug[row] = [aug[row][j] - factor * aug[col][j]
                         for j in range(n + 1)]
 
-    return [aug[i][n] for i in range(n)]`
+    return [aug[i][n] for i in range(n)]
+
+# Configuración actual de los ajustes
+cero_maquina = ${settings.ceroMaquina}
+
+# Sistema a resolver
+A = ${formatMatrixArray(matrix)}
+b = ${formatVectorArray(vector)}
+
+solucion = gauss_jordan(A, b, cero_maquina=cero_maquina)
+print("Solución:", solucion)`
+
+  // ─── CSS overrides ────────────────────────────────────────────────────
+  const styleOverride = (
+    <style>{`
+      .gauss-theory-body .expander-body {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .gauss-theory-body .katex-display {
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 4px;
+      }
+    `}</style>
+  )
+
+  // ─── Botón PDF ────────────────────────────────────────────────────────
+  const pdfButton = resultData ? (
+    <div style={{ marginTop: '1rem' }}>
+      <button
+        className="btn btn-secondary"
+        style={{ width: '100%' }}
+        onClick={() => generarPDF(resultData, n, matrix, vector, 'Eliminación de Gauss-Jordan')}
+      >Generar reporte en PDF</button>
+    </div>
+  ) : null
 
   return (
-    <MatrixLayout
-      title="Eliminación de Gauss-Jordan"
-      badge="SISTEMAS LINEALES"
-      teoria={teoria}
-      inputs={inputs}
-      onCalcular={loading ? null : calcular}
-      result={result}
-      error={error}
-      codeRaw={code}
-      matrixA={A}
-      vectorB={b}
-    />
+    <div>
+      {styleOverride}
+      <MatrixLayout
+        title="Eliminación de Gauss-Jordan"
+        badge="SISTEMAS LINEALES"
+        teoria={teoria}
+        inputs={inputs}
+        onCalcular={loading ? null : calcular}
+        resultContent={
+          resultData ? (
+            <div>
+              <GaussResultsPanel result={resultData} />
+              {pdfButton}
+            </div>
+          ) : null
+        }
+        result={null}
+        codeRaw={code}
+        hidePdf={true}
+        extra={
+          resultData && !resultData.isError && resultData.pasos ? (
+            <PasosRender pasos={resultData.pasos} />
+          ) : null
+        }
+      />
+    </div>
   )
 }

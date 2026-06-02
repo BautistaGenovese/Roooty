@@ -1,8 +1,10 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { 
-  IconBiseccion, IconRegulaFalsi, IconNewton, IconSecante, 
-  IconPuntoFijo, IconRegresion, IconComparacion 
+import {
+  IconBiseccion, IconRegulaFalsi, IconNewton, IconSecante,
+  IconPuntoFijo, IconRegresion, IconComparacion,
+  IconGaussJordan, IconMatrices, IconTrapecio, IconSimpson
 } from '../components/Icons'
+import Latex from '../components/Latex'
 
 export default function Inicio() {
   const navigate = useNavigate()
@@ -289,6 +291,143 @@ export default function Inicio() {
               <button
                 className="try-example-btn"
                 onClick={e => { e.preventDefault(); tryExample('/punto-fijo', { g: '(x**2 + 2) / 3', x0: 0 }) }}
+              >▶ Probar ejemplo</button>
+            </div>
+          </div>
+        </Link>
+      </div>
+
+      {/* SISTEMAS LINEALES */}
+      <p className="sidebar-section-label" style={{ marginBottom: '1rem' }}>📐 SISTEMAS LINEALES — Resolvé sistemas de ecuaciones (Ax = b)</p>
+      <div className="methods-grid" style={{ marginBottom: '2rem' }}>
+        <Link to="/matrices/gaussiana" style={{ textDecoration: 'none' }}>
+          <div className="method-guide-card">
+            <div className="method-guide-header">
+              <strong style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><IconMatrices size={18} /> Eliminación Gaussiana</strong>
+              <span className="history-param-chip">Con pivoteo</span>
+            </div>
+            <p className="method-guide-desc">Triangulariza la matriz paso a paso y realiza sustitución regresiva. Útil para obtener resultados intermedios.</p>
+            <div className="method-guide-when">
+              <span className="method-when-label">✅ Ideal cuando:</span>
+              <ul>
+                <li>Tenés un sistema cuadrado n×n</li>
+                <li>Querés ver la matriz triangular superior resultante</li>
+              </ul>
+            </div>
+            <div className="method-guide-example">
+              <span className="method-ex-label">📌 Ejemplo típico:</span>
+              <div style={{ margin: '8px 0', fontSize: '0.9em', display: 'flex', justifyContent: 'center', overflowX: 'auto', paddingBottom: '4px' }}>
+                <Latex tex={String.raw`\begin{pmatrix} 2 & -1 & 1 & 3 \\ 1 & 3 & -2 & 2 \\ 3 & 1 & 4 & -1 \\ -1 & 2 & -1 & 5 \end{pmatrix} x = \begin{pmatrix} 14 \\ -2 \\ 19 \\ 10 \end{pmatrix}`} display={true} />
+              </div>
+              <button
+                className="try-example-btn"
+                onClick={e => { e.preventDefault(); tryExample('/matrices/gaussiana', { matrix: JSON.stringify([[2, -1, 1, 3], [1, 3, -2, 2], [3, 1, 4, -1], [-1, 2, -1, 5]]), vector: JSON.stringify([14, -2, 19, 10]), n: 4 }) }}
+              >▶ Probar ejemplo</button>
+            </div>
+          </div>
+        </Link>
+
+        <Link to="/matrices/gauss-jordan" style={{ textDecoration: 'none' }}>
+          <div className="method-guide-card">
+            <div className="method-guide-header">
+              <strong style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><IconGaussJordan size={18} /> Gauss-Jordan</strong>
+              <span className="history-param-chip">Directo</span>
+            </div>
+            <p className="method-guide-desc">Reduce la matriz a la identidad eliminando coeficientes en ambas direcciones de la diagonal. Entrega la solución directa sin sustitución.</p>
+            <div className="method-guide-when">
+              <span className="method-when-label">✅ Ideal cuando:</span>
+              <ul>
+                <li>Querés la solución directa leyendo el vector final</li>
+                <li>Necesitás encontrar la inversa en un proceso análogo</li>
+              </ul>
+            </div>
+            <div className="method-guide-example">
+              <span className="method-ex-label">📌 Ejemplo típico:</span>
+              <div style={{ margin: '8px 0', fontSize: '0.9em', display: 'flex', justifyContent: 'center', overflowX: 'auto', paddingBottom: '4px' }}>
+                <Latex tex={String.raw`\begin{pmatrix} 4 & -1 & 0 & -1 \\ -1 & 4 & -1 & 0 \\ 0 & -1 & 4 & -1 \\ -1 & 0 & -1 & 4 \end{pmatrix} x = \begin{pmatrix} 30 \\ 0 \\ 0 \\ 0 \end{pmatrix}`} display={true} />
+              </div>
+              <button
+                className="try-example-btn"
+                onClick={e => { e.preventDefault(); tryExample('/matrices/gauss-jordan', { matA: JSON.stringify([[4, -1, 0, -1], [-1, 4, -1, 0], [0, -1, 4, -1], [-1, 0, -1, 4]]), vecB: JSON.stringify([30, 0, 0, 0]) }) }}
+              >▶ Probar ejemplo</button>
+            </div>
+          </div>
+        </Link>
+      </div>
+
+      {/* INTEGRACIÓN NUMÉRICA */}
+      <p className="sidebar-section-label" style={{ marginBottom: '1rem' }}>📈 INTEGRACIÓN NUMÉRICA — Aproxima áreas bajo la curva</p>
+      <div className="methods-grid" style={{ marginBottom: '2rem' }}>
+        <Link to="/integracion/trapecio" style={{ textDecoration: 'none' }}>
+          <div className="method-guide-card">
+            <div className="method-guide-header">
+              <strong style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><IconTrapecio size={18} /> Trapecio</strong>
+              <span className="history-param-chip">Básico</span>
+            </div>
+            <p className="method-guide-desc">Aproxima la integral dividiendo el área en trapecios. Simple, confiable y sin restricciones de n.</p>
+            <div className="method-guide-when">
+              <span className="method-when-label">✅ Ideal cuando:</span>
+              <ul>
+                <li>Tenés cualquier número de intervalos n</li>
+                <li>No requerís la máxima precisión posible de orden superior</li>
+              </ul>
+            </div>
+            <div className="method-guide-example">
+              <span className="method-ex-label">📌 Ejemplo típico:</span>
+              <code>f(x) = x² + sin(x)</code> en <code>[0, 10]</code>con <code>n=10</code>
+              <button
+                className="try-example-btn"
+                onClick={e => { e.preventDefault(); tryExample('/integracion/trapecio', { f: 'x**2 + sin(x)', a: 0, b: 10, n: 10 }) }}
+              >▶ Probar ejemplo</button>
+            </div>
+          </div>
+        </Link>
+
+        <Link to="/integracion/simpson13" style={{ textDecoration: 'none' }}>
+          <div className="method-guide-card">
+            <div className="method-guide-header">
+              <strong style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><IconSimpson size={18} /> Simpson 1/3</strong>
+              <span className="history-param-chip">Con Parábolas</span>
+            </div>
+            <p className="method-guide-desc">Usa parábolas en lugar de líneas rectas. Es muy preciso pero requiere un número de intervalos par.</p>
+            <div className="method-guide-when">
+              <span className="method-when-label">✅ Ideal cuando:</span>
+              <ul>
+                <li>El número n es un número PAR</li>
+                <li>Deseás una mejor aproximación con el mismo costo computacional</li>
+              </ul>
+            </div>
+            <div className="method-guide-example">
+              <span className="method-ex-label">📌 Ejemplo típico:</span>
+              <code>f(x) = exp(x)</code> en <code>[0, 2]</code>con <code>n=8</code>
+              <button
+                className="try-example-btn"
+                onClick={e => { e.preventDefault(); tryExample('/integracion/simpson13', { f: 'exp(x)', a: 0, b: 2, n: 8 }) }}
+              >▶ Probar ejemplo</button>
+            </div>
+          </div>
+        </Link>
+
+        <Link to="/integracion/simpson38" style={{ textDecoration: 'none' }}>
+          <div className="method-guide-card">
+            <div className="method-guide-header">
+              <strong style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><IconSimpson size={18} /> Simpson 3/8</strong>
+              <span className="history-param-chip">Con Cúbicas</span>
+            </div>
+            <p className="method-guide-desc">Usa polinomios de tercer grado para aproximar. Extremadamente preciso para curvas suaves.</p>
+            <div className="method-guide-when">
+              <span className="method-when-label">✅ Ideal cuando:</span>
+              <ul>
+                <li>El número n es MÚLTIPLO DE 3</li>
+                <li>La función experimenta curvaturas muy bruscas</li>
+              </ul>
+            </div>
+            <div className="method-guide-example">
+              <span className="method-ex-label">📌 Ejemplo típico:</span>
+              <code>f(x) = log(x)</code> en <code>[1, 5]</code>con <code>n=9</code>
+              <button
+                className="try-example-btn"
+                onClick={e => { e.preventDefault(); tryExample('/integracion/simpson38', { f: 'log(x)', a: 1, b: 5, n: 9 }) }}
               >▶ Probar ejemplo</button>
             </div>
           </div>

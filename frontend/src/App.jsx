@@ -17,7 +17,7 @@ import Historial from './pages/Historial'
 import Trapecio from './pages/integracion/Trapecio'
 import Simpson13 from './pages/integracion/Simpson13'
 import Simpson38 from './pages/integracion/Simpson38'
-import EliminacionGaussiana from './pages/EliminacionGaussiana'
+import EliminacionGaussiana from './pages/matrices/EliminacionGaussiana'
 
 import GaussJordan from './pages/matrices/GaussJordan'
 
@@ -85,7 +85,6 @@ export default function App() {
 
                 {/* Sistemas Lineales */}
                 <Route path="/matrices/gauss-jordan" element={<GaussJordan />} />
-                {/* Álgebra Lineal */}
                 <Route path="/matrices/gaussiana" element={<EliminacionGaussiana />} />
               </Routes>
             </MainContent>

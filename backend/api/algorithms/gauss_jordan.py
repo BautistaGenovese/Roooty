@@ -22,6 +22,7 @@ def _matrix_to_list(mat: List[List[float]], decimals: int = 6) -> List[List[floa
 def run_gauss_jordan(
     A: List[List[float]],
     b: List[float],
+    cero_maquina: float = 1e-12,
 ) -> dict:
     """
     Aplica Gauss-Jordan a la matriz aumentada [A | b].
@@ -75,7 +76,7 @@ def run_gauss_jordan(
                 max_val = abs(aug[row][col])
                 max_row = row
 
-        if max_val < 1e-12:
+        if max_val < cero_maquina:
             return {
                 "solucion": None,
                 "pasos": pasos,
@@ -108,7 +109,7 @@ def run_gauss_jordan(
             if row == col:
                 continue
             factor = aug[row][col]
-            if abs(factor) < 1e-15:
+            if abs(factor) < cero_maquina:
                 continue
             aug[row] = [aug[row][j] - factor * aug[col][j] for j in range(n + 1)]
             snapshot(

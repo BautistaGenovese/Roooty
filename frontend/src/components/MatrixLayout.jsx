@@ -12,64 +12,45 @@ const varLabel = i => VAR_NAMES[i] ?? `x${i + 1}`
  * Renders a matrix in bracket notation with an optional divider column.
  * Used to display the augmented matrix [A | b] at each step.
  */
-export function MatrixDisplay({ matrix, highlightRow = -1, highlightPivotRow = -1, n }) {
+export function MatrixDisplay({ matrix, highlightRow = -1, highlightPivotRow = -1 }) {
   if (!matrix || matrix.length === 0) return null
 
   const rows = matrix.length
   const cols = matrix[0].length // last col is the b vector
 
-  const cellStyle = (r, c) => ({
-    padding: '4px 10px',
-    textAlign: 'right',
-    fontFamily: 'var(--font-mono)',
-    fontSize: '0.82rem',
-    fontWeight: r === highlightPivotRow ? 700 : 400,
-    color: r === highlightPivotRow
-      ? 'var(--blue)'
-      : r === highlightRow
-        ? 'var(--success)'
-        : 'var(--navy)',
-    background: r === highlightRow
-      ? 'rgba(0,230,118,0.08)'
-      : r === highlightPivotRow
-        ? 'rgba(59,130,246,0.08)'
-        : 'transparent',
-    transition: 'background 0.25s',
-    borderRight: c === cols - 2 ? '2px solid var(--blue)' : 'none',
-    minWidth: '56px',
-  })
-
   return (
-    <div style={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: '2px',
-      background: 'var(--gray-50)',
-      borderRadius: '10px',
-      border: '1px solid var(--border)',
-      padding: '6px 4px',
-      overflowX: 'auto',
-      maxWidth: '100%',
-    }}>
-      {/* Left bracket */}
-      <div style={{ fontSize: '2.4rem', color: 'var(--slate)', lineHeight: 1, paddingLeft: 2, fontWeight: 100 }}>⎡<br />⎢<br />⎣</div>
+    <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+      <div style={{ position: 'relative', padding: '0 16px', width: '100%', maxWidth: '850px' }}>
+        {/* CSS Brackets */}
+        <div className="matrix-bracket matrix-bracket-left" />
+        <div className="matrix-bracket matrix-bracket-right" />
 
-      <table style={{ borderCollapse: 'collapse' }}>
-        <tbody>
-          {matrix.map((row, r) => (
-            <tr key={r}>
-              {row.map((val, c) => (
-                <td key={c} style={cellStyle(r, c)}>
-                  {typeof val === 'number' ? (Math.abs(val) < 1e-9 ? '0' : val.toFixed(4)) : val}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+        <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed', fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>
+          <tbody>
+            {matrix.map((row, r) => {
+              const isPivot = r === highlightPivotRow
+              const isMod = r === highlightRow
+              return (
+                <tr key={r} className={`matrix-row ${isMod ? 'is-mod' : ''} ${isPivot ? 'is-pivot' : ''}`}>
+                  {row.map((val, c) => {
+                    const isB = c === cols - 1
+                    const v = typeof val === 'string' ? parseFloat(val) : val
+                    const displayVal = (typeof v === 'number' && !isNaN(v)) 
+                      ? (Math.abs(v) < 1e-9 ? '0' : (Number.isInteger(v) ? v : Number(v.toFixed(5)))) 
+                      : val
 
-      {/* Right bracket */}
-      <div style={{ fontSize: '2.4rem', color: 'var(--slate)', lineHeight: 1, paddingRight: 2, fontWeight: 100 }}>⎤<br />⎥<br />⎦</div>
+                    return (
+                      <td key={c} className={`matrix-cell ${isB ? 'is-b' : ''}`}>
+                        {displayVal}
+                      </td>
+                    )
+                  })}
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }
@@ -553,8 +534,8 @@ export default function MatrixLayout({ title, badge, teoria, inputs, onCalcular,
         </div>
       </div>
 
-      {/* Steps panel — full width below the two columns */}
-      {result?.pasos && <StepsPanel pasos={result.pasos} />}
+      {/* Extra content (steps panel, etc.) — full width below the two columns */}
+      {extra}
 
       {/* Python code */}
       {codeRaw && (

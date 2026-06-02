@@ -213,17 +213,26 @@ export default function Simpson13() {
     </>
   )
 
-  const codeRaw = `def simpson_13(f, a, b, n):
+  const codeRaw = `import math
+
+# Ajuste global
+trig_mode = "${settings.trigMode}"
+
+def simpson_13(f_func, a, b, n):
     if n % 2 != 0:
         raise ValueError("n debe ser par")
     h = (b - a) / n
     xs = [a + i * h for i in range(n + 1)]
-    fxs = [f(x) for x in xs]
+    fxs = [f_func(x) for x in xs]
     suma_imp = sum(fxs[i] for i in range(1, n, 2))   # coef. 4
     suma_par = sum(fxs[i] for i in range(2, n, 2))   # coef. 2
     return (h / 3) * (fxs[0] + 4*suma_imp + 2*suma_par + fxs[-1])
 
-resultado = simpson_13(lambda x: x**2, a=${a}, b=${b}, n=${nEsPar ? n : Number(n) + 1})
+def f(x):
+    # Función a evaluar: ${f || 'f(x)'}
+    return x**2
+
+resultado = simpson_13(f, a=${a}, b=${b}, n=${nEsPar ? n : Number(n) + 1})
 print(f"Integral ≈ {resultado:.8f}")`
 
   return (

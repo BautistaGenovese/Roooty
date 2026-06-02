@@ -1,9 +1,9 @@
 import { NavLink } from 'react-router-dom'
 import Settings from './Settings'
 import { useHistory } from '../hooks/useHistory'
-import { 
-  IconHome, IconBiseccion, IconRegulaFalsi, IconNewton, 
-  IconSecante, IconPuntoFijo, IconRegresion, IconComparacion, 
+import {
+  IconHome, IconBiseccion, IconRegulaFalsi, IconNewton,
+  IconSecante, IconPuntoFijo, IconRegresion, IconComparacion,
   IconTrapecio, IconSimpson, IconHistory, IconGaussJordan, IconMatrices
 } from './Icons'
 
@@ -29,13 +29,10 @@ const LINKS = {
     { to: '/integracion/simpson13', label: 'Simpson 1/3', icon: <IconSimpson /> },
     { to: '/integracion/simpson38', label: 'Simpson 3/8', icon: <IconSimpson /> },
   ],
-  // Sistemas lineales (nuestro aporte)
+  // Sistemas lineales — ambos métodos de Gauss juntos
   sistemas: [
-    { to: '/matrices/gauss-jordan', label: 'Gauss-Jordan', icon: <IconGaussJordan /> },
-  ],
-  // Álgebra lineal (aporte del compañero)
-  algebra: [
     { to: '/matrices/gaussiana', label: 'Eliminación Gaussiana', icon: <IconMatrices /> },
+    { to: '/matrices/gauss-jordan', label: 'Gauss-Jordan', icon: <IconGaussJordan /> },
   ],
 }
 
@@ -92,9 +89,6 @@ export default function Sidebar({ isOpen, onClose }) {
 
         <p className="sidebar-section-label">SISTEMAS LINEALES</p>
         {LINKS.sistemas.map(l => <SidebarLink key={l.to} {...l} onClick={onClose} />)}
-
-        <p className="sidebar-section-label">ÁLGEBRA LINEAL</p>
-        {LINKS.algebra.map(l => <SidebarLink key={l.to} {...l} onClick={onClose} />)}
 
         <p className="sidebar-section-label">HERRAMIENTAS</p>
         {LINKS.herramientas.map(l => <SidebarLink key={l.to} {...l} onClick={onClose} />)}

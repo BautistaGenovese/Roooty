@@ -224,17 +224,29 @@ export default function Trapecio() {
     </>
   )
 
-  const codeRaw = `def trapecio(f, a, b, n):
+  const codeRaw = `import math
+
+# Ajuste global
+trig_mode = "${settings.trigMode}"
+# Nota: La implementación en Python de trig_mode puede requerir
+#       convertir a radianes/grados según corresponda.
+
+def trapecio(f_func, a, b, n):
     h = (b - a) / n
     xs = [a + i * h for i in range(n + 1)]
-    fxs = [f(x) for x in xs]
+    fxs = [f_func(x) for x in xs]
 
     # Coeficientes: 1, 2, 2, ..., 2, 1
     integral = (h / 2) * (fxs[0] + 2 * sum(fxs[1:-1]) + fxs[-1])
     return integral
 
-# Ejemplo: ∫₀¹ x² dx = 1/3
-resultado = trapecio(lambda x: x**2, a=${a}, b=${b}, n=${n})
+def f(x):
+    # Aquí deberías implementar tu función: ${f || 'f(x)'}
+    # Por ejemplo, eval() o tu propio parseo
+    return x**2 # Reemplazar con la función real
+
+# Ejemplo con los parámetros actuales
+resultado = trapecio(f, a=${a}, b=${b}, n=${n})
 print(f"Integral ≈ {resultado:.8f}")`
 
   const resultPanel = resultado

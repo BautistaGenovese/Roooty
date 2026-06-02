@@ -220,18 +220,27 @@ export default function Simpson38() {
     </>
   )
 
-  const codeRaw = `def simpson_38(f, a, b, n):
+  const codeRaw = `import math
+
+# Ajuste global
+trig_mode = "${settings.trigMode}"
+
+def simpson_38(f_func, a, b, n):
     if n % 3 != 0:
         raise ValueError("n debe ser múltiplo de 3")
     h = (b - a) / n
     xs = [a + i * h for i in range(n + 1)]
-    fxs = [f(x) for x in xs]
+    fxs = [f_func(x) for x in xs]
     total = fxs[0] + fxs[-1]
     for i in range(1, n):
         total += 2 * fxs[i] if i % 3 == 0 else 3 * fxs[i]
     return (3 * h / 8) * total
 
-resultado = simpson_38(lambda x: x**3, a=${a}, b=${b}, n=${nEsMultiplo3 ? n : multiplo3Cercano(Number(n))})
+def f(x):
+    # Función a evaluar: ${f || 'f(x)'}
+    return x**3
+
+resultado = simpson_38(f, a=${a}, b=${b}, n=${nEsMultiplo3 ? n : multiplo3Cercano(Number(n))})
 print(f"Integral ≈ {resultado:.8f}")`
 
   return (
