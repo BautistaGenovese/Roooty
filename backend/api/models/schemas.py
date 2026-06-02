@@ -63,3 +63,16 @@ class IntegracionRequest(BaseModel):
     b: float
     n: int = 100
     trig_mode: str = "Radianes"
+from pydantic import BaseModel
+from typing import Optional
+ 
+
+class EulerRequest(BaseModel):
+    f: str                        # función f(x, y) como string, ej: "x + y"
+    x0: float                     # valor inicial de x
+    y0: float                     # valor inicial de y (condición inicial)
+    h: float = 0.1                # tamaño de paso
+    x_final: Optional[float] = None   # límite superior del intervalo
+    max_iters: int = 100
+    trig_mode: str = "rad"        # "rad" | "deg"
+ 
