@@ -28,8 +28,9 @@ const LINKS = {
     { to: '/integracion/trapecio', label: 'Trapecio', icon: <IconTrapecio /> },
     { to: '/integracion/simpson13', label: 'Simpson 1/3', icon: <IconSimpson /> },
     { to: '/integracion/simpson38', label: 'Simpson 3/8', icon: <IconSimpson /> },
+  ],
+  edos: [
     { to: '/edos/euler', label: 'Euler', icon: <IconTrapecio /> },
-  ]
   ],
   // Sistemas lineales — ambos métodos de Gauss juntos
   sistemas: [
