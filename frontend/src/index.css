@@ -706,8 +706,17 @@ body,
 }
 
 @keyframes pulse-dot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(1.3); }
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: scale(1.3);
+  }
 }
 
 /* ─── HISTORY PAGE ────────────────────────────────────────── */
@@ -1987,7 +1996,7 @@ html.dark .verdict-title {
   color: white;
 }
 
-html.dark .verdict-reason, 
+html.dark .verdict-reason,
 html.dark .verdict-label,
 html.dark .root-label {
   color: rgba(255, 255, 255, 0.6);
@@ -2021,7 +2030,7 @@ html.dark .verdict-footer {
   padding: 6px 16px;
   border-radius: 30px;
   border: 1px solid var(--border);
-  box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
 }
 
 .analysis-f-display {
@@ -2592,7 +2601,7 @@ html.dark .code-block {
   }
 
   /* La matriz aumentada puede hacer scroll horizontal */
-  .form-group > div[style*="overflowX"] {
+  .form-group>div[style*="overflowX"] {
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch;
   }
@@ -2695,22 +2704,19 @@ html.dark .metric-card:hover {
 .gauss-steps-container {
   display: flex;
   flex-direction: column;
-  gap: 14px;
 }
 
 .gauss-step-card {
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-left-width: 4px;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-  transition: transform 0.2s, box-shadow 0.2s;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.2s;
+}
+
+.gauss-step-card:last-child {
+  border-bottom: none;
 }
 
 .gauss-step-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  background: rgba(0, 0, 0, 0.01);
 }
 
 .gauss-step-header {
@@ -2733,7 +2739,7 @@ html.dark .metric-card:hover {
   font-size: 0.75rem;
   font-weight: 800;
   flex-shrink: 0;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .gauss-step-desc {
@@ -2758,12 +2764,7 @@ html.dark .metric-card:hover {
 }
 
 html.dark .gauss-step-card {
-  background: var(--sidebar-bg);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-}
-
-html.dark .gauss-step-card:hover {
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  background: transparent;
 }
 
 html.dark .gauss-step-header {
@@ -2818,15 +2819,18 @@ html.dark .gauss-sol-row {
 /* ─── MATRIX DISPLAY CLASSES ─────────────────────────── */
 .matrix-bracket {
   position: absolute;
-  top: 0; bottom: 0;
+  top: 0;
+  bottom: 0;
   width: 8px;
   border: 2px solid rgba(148, 163, 184, 0.6);
 }
+
 .matrix-bracket-left {
   left: 0;
   border-right: none;
   border-radius: 6px 0 0 6px;
 }
+
 .matrix-bracket-right {
   right: 0;
   border-left: none;
@@ -2839,20 +2843,25 @@ html.dark .gauss-sol-row {
   border-bottom: none !important;
   background: transparent !important;
 }
+
 .matrix-row:hover,
 .expander--table tbody tr.matrix-row:hover,
 html.dark .expander--table tbody tr.matrix-row:hover {
   background: transparent !important;
 }
+
 .matrix-row.is-mod {
   background: rgba(59, 130, 246, 0.08) !important;
 }
+
 .matrix-row.is-mod:hover {
   background: rgba(59, 130, 246, 0.08) !important;
 }
+
 .matrix-row.is-pivot {
   background: rgba(0, 0, 0, 0.02) !important;
 }
+
 .matrix-row.is-pivot:hover {
   background: rgba(0, 0, 0, 0.02) !important;
 }
@@ -2866,9 +2875,11 @@ html.dark .expander--table tbody tr.matrix-row:hover {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .matrix-cell:nth-last-child(2) {
   border-right: 1px solid rgba(148, 163, 184, 0.4);
 }
+
 .matrix-cell.is-b {
   color: var(--blue);
   font-weight: 700;
@@ -2877,21 +2888,27 @@ html.dark .expander--table tbody tr.matrix-row:hover {
 html.dark .matrix-row.is-mod {
   background: rgba(59, 130, 246, 0.15) !important;
 }
+
 html.dark .matrix-row.is-mod:hover {
   background: rgba(59, 130, 246, 0.15) !important;
 }
+
 html.dark .matrix-row.is-pivot {
   background: rgba(255, 255, 255, 0.03) !important;
 }
+
 html.dark .matrix-row.is-pivot:hover {
   background: rgba(255, 255, 255, 0.03) !important;
 }
+
 html.dark .matrix-cell {
   color: #e2e8f0;
 }
+
 html.dark .matrix-cell.is-b {
   color: #60a5fa;
 }
+
 html.dark .matrix-bracket {
   border-color: rgba(148, 163, 184, 0.4);
 }

@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
-import { useSettings } from '../hooks/useSettings'
-import { apiPost, buildPayload } from '../utils/api'
-import Latex from '../components/Latex'
-import ODELayout from '../components/ODELayout'
-import { Expander } from '../components/MethodLayout'
+import { useState } from 'react'
+import { useSettings } from '../../hooks/useSettings'
+import { apiPost } from '../../utils/api'
+import Latex from '../../components/Latex'
+import ODELayout from '../../components/ODELayout'
+import { Expander } from '../../components/MethodLayout'
 
 const COLS = [
   { key: 'x',      label: 'x[i]' },
@@ -42,10 +42,9 @@ export default function Euler() {
         setError(data.error); setResult(null); return
       }
 
-      // ODEResultsPanel espera dataPoints como array de {x, y}
       setResult({
         dataPoints: data.puntos,
-        iteraciones: data.tabla,   // para la tabla expandible
+        iteraciones: data.tabla,
       })
     } catch (e) {
       setError(e.response?.data?.detail || 'Error al calcular.')
@@ -76,13 +75,7 @@ export default function Euler() {
     <>
       <div className="form-group">
         <label className="form-label">f(x, y) — ecuación diferencial y' =</label>
-        <input
-          className="form-input"
-          type="text"
-          value={f}
-          placeholder="ej: x + y"
-          onChange={e => setF(e.target.value)}
-        />
+        <input className="form-input" type="text" value={f} placeholder="ej: x + y" onChange={e => setF(e.target.value)} />
       </div>
 
       <div className="input-col-2">

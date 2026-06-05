@@ -5,7 +5,7 @@ Métodos Runge-Kutta de 2do Orden:
 - Ralston
 """
 
-from api.utils.math_helpers import evaluar_f
+from api.utils.math_helpers import evaluar_fxy
 
 
 # =========================================
@@ -21,9 +21,9 @@ def run_heun(req):
 
     for i in range(req.n):
 
-        k1 = evaluar_f(req.f, x, y, req.trig_mode)
+        k1 = evaluar_fxy(req.f, x, y, req.trig_mode)
 
-        k2 = evaluar_f(
+        k2 = evaluar_fxy(
             req.f,
             x + req.h,
             y + req.h * k1,
@@ -60,9 +60,9 @@ def run_punto_medio(req):
 
     for i in range(req.n):
 
-        k1 = evaluar_f(req.f, x, y, req.trig_mode)
+        k1 = evaluar_fxy(req.f, x, y, req.trig_mode)
 
-        k2 = evaluar_f(
+        k2 = evaluar_fxy(
             req.f,
             x + req.h / 2,
             y + (req.h / 2) * k1,
@@ -99,9 +99,9 @@ def run_ralston(req):
 
     for i in range(req.n):
 
-        k1 = evaluar_f(req.f, x, y, req.trig_mode)
+        k1 = evaluar_fxy(req.f, x, y, req.trig_mode)
 
-        k2 = evaluar_f(
+        k2 = evaluar_fxy(
             req.f,
             x + (3 * req.h / 4),
             y + (3 * req.h / 4) * k1,

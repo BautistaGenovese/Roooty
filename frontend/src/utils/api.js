@@ -2,9 +2,21 @@ import axios from 'axios'
 
 const BASE = '/api'
 
+function formatPydanticError(err) {
+  if (err.response?.data?.detail && Array.isArray(err.response.data.detail)) {
+    const msgs = err.response.data.detail.map(e => `${e.loc?.slice(1).join('.') || 'input'}: ${e.msg}`)
+    err.response.data.detail = msgs.join(' | ')
+  }
+  return err
+}
+
 export async function apiPost(endpoint, data) {
-  const res = await axios.post(`${BASE}/${endpoint}`, data)
-  return res.data
+  try {
+    const res = await axios.post(`${BASE}/${endpoint}`, data)
+    return res.data
+  } catch (err) {
+    throw formatPydanticError(err)
+  }
 }
 
 export function buildPayload(payload, settings) {
@@ -19,8 +31,12 @@ export function buildPayload(payload, settings) {
 }
 
 export async function fetchChartData(f, xMin, xMax, trigMode) {
-  const res = await axios.post(`${BASE}/chart_data`, {
-    f, x_min: xMin, x_max: xMax, trig_mode: trigMode, n_points: 500,
-  })
-  return res.data
+  try {
+    const res = await axios.post(`${BASE}/chart_data`, {
+      f, x_min: xMin, x_max: xMax, trig_mode: trigMode, n_points: 500,
+    })
+    return res.data
+  } catch (err) {
+    throw formatPydanticError(err)
+  }
 }

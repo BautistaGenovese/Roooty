@@ -4,7 +4,8 @@ import { useHistory } from '../hooks/useHistory'
 import {
   IconHome, IconBiseccion, IconRegulaFalsi, IconNewton,
   IconSecante, IconPuntoFijo, IconRegresion, IconComparacion,
-  IconTrapecio, IconSimpson, IconHistory, IconGaussJordan, IconMatrices
+  IconTrapecio, IconSimpson, IconHistory, IconGaussJordan, IconMatrices,
+  IconEuler, IconHeun, IconPuntoMedio, IconRalston
 } from './Icons'
 
 const LINKS = {
@@ -30,7 +31,10 @@ const LINKS = {
     { to: '/integracion/simpson38', label: 'Simpson 3/8', icon: <IconSimpson /> },
   ],
   edos: [
-    { to: '/edos/euler', label: 'Euler', icon: <IconTrapecio /> },
+    { to: '/edos/euler', label: 'Euler', icon: <IconEuler /> },
+    { to: '/edos/heun', label: 'Heun', icon: <IconHeun /> },
+    { to: '/edos/punto-medio', label: 'Punto Medio', icon: <IconPuntoMedio /> },
+    { to: '/edos/ralston', label: 'Ralston', icon: <IconRalston /> },
   ],
   // Sistemas lineales — ambos métodos de Gauss juntos
   sistemas: [

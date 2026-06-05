@@ -14,9 +14,14 @@ const METHOD_ROUTES = {
   'Simpson 3/8': '/integracion/simpson38',
   'Gauss-Jordan': '/matrices/gauss-jordan',
   'Eliminación Gaussiana': '/matrices/gaussiana',
+  'Euler': '/edos/euler',
+  'Heun': '/edos/heun',
+  'Punto Medio': '/edos/punto-medio',
+  'Ralston': '/edos/ralston',
 }
 
 const MATRIX_METHODS = ['Eliminación Gaussiana', 'Gauss-Jordan']
+const EDO_METHODS = ['Euler', 'Heun', 'Punto Medio', 'Ralston']
 
 function timeAgo(date) {
   const seconds = Math.floor((new Date() - date) / 1000)
@@ -74,10 +79,18 @@ function HistoryCard({ entry }) {
         </div>
       )}
 
-      {entry.raiz == null && (
+      {entry.raiz == null && !EDO_METHODS.includes(entry.method) && (
         <div className={`history-card-result${MATRIX_METHODS.includes(entry.method) ? '' : ' history-card-result--fail'}`}>
           <span className="history-result-label">
             {MATRIX_METHODS.includes(entry.method) ? '✓ Sistema resuelto' : 'No convergió'}
+          </span>
+        </div>
+      )}
+
+      {EDO_METHODS.includes(entry.method) && (
+        <div className="history-card-result">
+          <span className="history-result-label">
+            ✓ EDO Resuelta
           </span>
         </div>
       )}

@@ -17,7 +17,10 @@ import Historial from './pages/Historial'
 import Trapecio from './pages/integracion/Trapecio'
 import Simpson13 from './pages/integracion/Simpson13'
 import Simpson38 from './pages/integracion/Simpson38'
-import Euler from './pages/EulerPage'
+import Euler from './pages/edos/Euler'
+import Heun from './pages/edos/Heun'
+import PuntoMedio from './pages/edos/PuntoMedio'
+import Ralston from './pages/edos/Ralston'
 import EliminacionGaussiana from './pages/matrices/EliminacionGaussiana'
 
 import GaussJordan from './pages/matrices/GaussJordan'
@@ -84,6 +87,9 @@ export default function App() {
                 <Route path="/integracion/simpson13" element={<Simpson13 />} />
                 <Route path="/integracion/simpson38" element={<Simpson38 />} />
                 <Route path="/edos/euler" element={<Euler />} />
+                <Route path="/edos/heun" element={<Heun />} />
+                <Route path="/edos/punto-medio" element={<PuntoMedio />} />
+                <Route path="/edos/ralston" element={<Ralston />} />
 
                 {/* Sistemas Lineales */}
                 <Route path="/matrices/gauss-jordan" element={<GaussJordan />} />
