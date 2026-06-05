@@ -17,6 +17,10 @@ import Historial from './pages/Historial'
 import Trapecio from './pages/integracion/Trapecio'
 import Simpson13 from './pages/integracion/Simpson13'
 import Simpson38 from './pages/integracion/Simpson38'
+import Euler from './pages/EulerPage'
+import EliminacionGaussiana from './pages/matrices/EliminacionGaussiana'
+
+import GaussJordan from './pages/matrices/GaussJordan'
 
 function MainContent({ children }) {
   const location = useLocation();
@@ -79,6 +83,11 @@ export default function App() {
                 <Route path="/integracion/trapecio" element={<Trapecio />} />
                 <Route path="/integracion/simpson13" element={<Simpson13 />} />
                 <Route path="/integracion/simpson38" element={<Simpson38 />} />
+                <Route path="/edos/euler" element={<Euler />} />
+
+                {/* Sistemas Lineales */}
+                <Route path="/matrices/gauss-jordan" element={<GaussJordan />} />
+                <Route path="/matrices/gaussiana" element={<EliminacionGaussiana />} />
               </Routes>
             </MainContent>
           </div>

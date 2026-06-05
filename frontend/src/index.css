@@ -849,9 +849,6 @@ html.dark .utility-btn--active .util-icon {
 }
 
 .settings-panel {
-  position: fixed;
-  bottom: 80px;
-  left: 10px;
   width: 260px;
   background: var(--white-alpha);
   backdrop-filter: blur(16px);
@@ -859,12 +856,13 @@ html.dark .utility-btn--active .util-icon {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 1.2rem;
-  z-index: 1000;
+  z-index: 9999;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   max-height: 70vh;
   overflow-y: auto;
   opacity: 0;
   animation: popIn 0.2s forwards ease-out;
+  transform-origin: bottom left;
 }
 
 @keyframes popIn {
@@ -1343,6 +1341,17 @@ tbody td {
   align-items: start;
 }
 
+/* Matrix layout variant: inputs get 2/3, results get 1/3 */
+.two-col--matrix {
+  grid-template-columns: 2fr 1fr;
+}
+
+@media (max-width: 768px) {
+  .two-col--matrix {
+    grid-template-columns: 1fr;
+  }
+}
+
 .two-col-equal {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1359,6 +1368,8 @@ tbody td {
 /* ─── METRICS BAR ─────────────────────────────────────────── */
 .metrics-bar {
   display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
   justify-content: space-evenly;
   align-items: center;
   background: #f8fafc;
@@ -1389,6 +1400,12 @@ tbody td {
   width: 1px;
   height: 35px;
   background: #cbd5e1;
+}
+
+@media (max-width: 1100px) {
+  .metric-divider {
+    display: none;
+  }
 }
 
 /* ─── RESULT PANEL PLACEHOLDER ────────────────────────────── */
@@ -2562,6 +2579,23 @@ html.dark .code-block {
   .two-col-equal {
     grid-template-columns: 1fr;
   }
+
+  /* Padding mínimo en pantallas muy pequeñas */
+  .main-content {
+    padding: 0.85rem;
+  }
+
+  /* Las fórmulas largas del expander hacen scroll */
+  .expander-body {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* La matriz aumentada puede hacer scroll horizontal */
+  .form-group > div[style*="overflowX"] {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 /* ─── PDF GENERATION MODE ─────────────────────────────────── */
@@ -2636,4 +2670,228 @@ html.dark .analysis-f-display::before {
 html.dark .metric-card:hover {
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
   border-color: var(--blue);
+}
+
+/* ─── GAUSS SHARED: CLEAR BUTTON ─────────────────────────── */
+.btn-clear-matrix {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--slate);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-clear-matrix:hover {
+  color: var(--error);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* ─── GAUSS SHARED: STEPS ─────────────────────────── */
+.gauss-steps-container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.gauss-step-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.gauss-step-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.gauss-step-header {
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.015);
+}
+
+.gauss-step-number {
+  min-width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.gauss-step-desc {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--navy);
+  flex: 1;
+}
+
+.gauss-step-matrix {
+  padding: 14px 16px;
+  overflow-x: auto;
+  display: flex;
+  justify-content: center;
+  background: var(--bg);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.gauss-step-matrix::-webkit-scrollbar {
+  display: none;
+}
+
+html.dark .gauss-step-card {
+  background: var(--sidebar-bg);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+html.dark .gauss-step-card:hover {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+html.dark .gauss-step-header {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+html.dark .gauss-step-matrix {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* ─── GAUSS SHARED: SOLUTION ROW ─────────────────────────── */
+.gauss-sol-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.4rem 0.75rem;
+}
+
+.gauss-sol-label {
+  font-size: 0.85rem;
+  color: var(--slate);
+  font-family: serif;
+  font-style: italic;
+  flex-shrink: 0;
+  min-width: 28px;
+}
+
+.gauss-sol-eq {
+  color: var(--slate);
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  padding: 0 6px;
+}
+
+.gauss-sol-val {
+  font-weight: 700;
+  font-family: monospace;
+  font-size: 0.92rem;
+  color: var(--navy);
+  word-break: break-all;
+  text-align: right;
+  flex: 1;
+}
+
+html.dark .gauss-sol-row {
+  background: var(--sidebar-bg);
+}
+
+/* ─── MATRIX DISPLAY CLASSES ─────────────────────────── */
+.matrix-bracket {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 8px;
+  border: 2px solid rgba(148, 163, 184, 0.6);
+}
+.matrix-bracket-left {
+  left: 0;
+  border-right: none;
+  border-radius: 6px 0 0 6px;
+}
+.matrix-bracket-right {
+  right: 0;
+  border-left: none;
+  border-radius: 0 6px 6px 0;
+}
+
+.matrix-row {
+  transition: background 0.2s;
+  border-radius: 6px;
+  border-bottom: none !important;
+  background: transparent !important;
+}
+.matrix-row:hover,
+.expander--table tbody tr.matrix-row:hover,
+html.dark .expander--table tbody tr.matrix-row:hover {
+  background: transparent !important;
+}
+.matrix-row.is-mod {
+  background: rgba(59, 130, 246, 0.08) !important;
+}
+.matrix-row.is-mod:hover {
+  background: rgba(59, 130, 246, 0.08) !important;
+}
+.matrix-row.is-pivot {
+  background: rgba(0, 0, 0, 0.02) !important;
+}
+.matrix-row.is-pivot:hover {
+  background: rgba(0, 0, 0, 0.02) !important;
+}
+
+.matrix-cell {
+  padding: 8px 12px;
+  text-align: right;
+  color: var(--navy);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.matrix-cell:nth-last-child(2) {
+  border-right: 1px solid rgba(148, 163, 184, 0.4);
+}
+.matrix-cell.is-b {
+  color: var(--blue);
+  font-weight: 700;
+}
+
+html.dark .matrix-row.is-mod {
+  background: rgba(59, 130, 246, 0.15) !important;
+}
+html.dark .matrix-row.is-mod:hover {
+  background: rgba(59, 130, 246, 0.15) !important;
+}
+html.dark .matrix-row.is-pivot {
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+html.dark .matrix-row.is-pivot:hover {
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+html.dark .matrix-cell {
+  color: #e2e8f0;
+}
+html.dark .matrix-cell.is-b {
+  color: #60a5fa;
+}
+html.dark .matrix-bracket {
+  border-color: rgba(148, 163, 184, 0.4);
 }

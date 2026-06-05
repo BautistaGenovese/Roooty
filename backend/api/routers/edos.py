@@ -1,14 +1,8 @@
-"""
-Router de EDOs — Endpoints para ecuaciones diferenciales ordinarias.
-
-TODO: Implementar endpoints para:
-  - Método de Euler
-  - Runge-Kutta (RK4)
-  - Heun
-  - Euler Mejorado
-"""
+"""Router de Ecuaciones Diferenciales Ordinarias (EDOs)."""
 
 from fastapi import APIRouter
+from api.models.schemas import EulerRequest
+from api.algorithms.euler import run_euler
 
 from api.models.schemas import ODERequest
 

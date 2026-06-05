@@ -1,27 +1,21 @@
 """Método de Newton-Raphson para búsqueda de raíces."""
 
-import sympy as sp
-from sympy.parsing.sympy_parser import (
-    parse_expr, standard_transformations, implicit_multiplication_application
-)
-
-from api.utils.math_helpers import limpiar_formula, evaluar_f, calcular_error
+from api.utils.math_helpers import compilar_funcion, calcular_error, obtener_derivada_str
 from api.models.schemas import NewtonRequest
 
 
 def run_newton(req: NewtonRequest):
     rows = []
-    f_limpia = limpiar_formula(req.f)
-    transformaciones = (standard_transformations + (implicit_multiplication_application,))
-    expr = parse_expr(f_limpia, transformations=transformaciones)
-    derivada_expr = sp.diff(expr, 'x')
-    derivada_str = str(derivada_expr)
+    derivada_str = obtener_derivada_str(req.f)
 
     x_n = req.x_0
 
+    f_compilada, _ = compilar_funcion(req.f, req.trig_mode)
+    df_compilada, _ = compilar_funcion(derivada_str, req.trig_mode)
+
     for i in range(req.max_iters):
-        fa = evaluar_f(req.f, x_n, req.trig_mode)
-        d_val = evaluar_f(derivada_str, x_n, req.trig_mode)
+        fa = f_compilada(x_n)
+        d_val = df_compilada(x_n)
 
         if d_val == 0 or abs(d_val) < req.cero_maquina:
             return None, rows, "La derivada es cero. El método no puede continuar."
@@ -40,7 +34,7 @@ def run_newton(req: NewtonRequest):
 
         if abs(x_n1) > req.limite_infinito:
             return None, rows, "El método divergió."
-        if abs(evaluar_f(req.f, x_n1, req.trig_mode)) <= req.cero_maquina:
+        if abs(f_compilada(x_n1)) <= req.cero_maquina:
             return x_n1, rows, None
         if err_cal <= req.err:
             return x_n1, rows, None

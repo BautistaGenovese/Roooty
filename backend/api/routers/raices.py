@@ -6,6 +6,7 @@ Incluye: Bisección, Regula Falsi, Newton-Raphson, Secante, Punto Fijo,
 """
 
 import math
+import time
 import numpy as np
 from fastapi import APIRouter, HTTPException
 
@@ -27,10 +28,12 @@ router = APIRouter(prefix="/api", tags=["Raíces"])
 @router.post("/biseccion")
 def api_biseccion(req: BiseccionRequest):
     try:
+        t0 = time.perf_counter()
         raiz, rows, error = run_biseccion(req)
+        t_ms = (time.perf_counter() - t0) * 1000
         if raiz is None:
             raise HTTPException(status_code=400, detail=error or "No se encontró la raíz.")
-        return {"raiz": raiz, "iteraciones": rows, "n_iters": len(rows)}
+        return {"raiz": raiz, "iteraciones": rows, "n_iters": len(rows), "time_ms": t_ms}
     except HTTPException:
         raise
     except Exception as e:
@@ -40,10 +43,12 @@ def api_biseccion(req: BiseccionRequest):
 @router.post("/regula_falsi")
 def api_regula_falsi(req: BiseccionRequest):
     try:
+        t0 = time.perf_counter()
         raiz, rows, error = run_regula_falsi(req)
+        t_ms = (time.perf_counter() - t0) * 1000
         if raiz is None:
             raise HTTPException(status_code=400, detail=error or "No se encontró la raíz.")
-        return {"raiz": raiz, "iteraciones": rows, "n_iters": len(rows)}
+        return {"raiz": raiz, "iteraciones": rows, "n_iters": len(rows), "time_ms": t_ms}
     except HTTPException:
         raise
     except Exception as e:
@@ -53,10 +58,12 @@ def api_regula_falsi(req: BiseccionRequest):
 @router.post("/newton")
 def api_newton(req: NewtonRequest):
     try:
+        t0 = time.perf_counter()
         raiz, rows, error = run_newton(req)
+        t_ms = (time.perf_counter() - t0) * 1000
         if raiz is None:
             raise HTTPException(status_code=400, detail=error or "No se encontró la raíz.")
-        return {"raiz": raiz, "iteraciones": rows, "n_iters": len(rows)}
+        return {"raiz": raiz, "iteraciones": rows, "n_iters": len(rows), "time_ms": t_ms}
     except HTTPException:
         raise
     except Exception as e:
@@ -66,10 +73,12 @@ def api_newton(req: NewtonRequest):
 @router.post("/secante")
 def api_secante(req: SecanteRequest):
     try:
+        t0 = time.perf_counter()
         raiz, rows, error = run_secante(req)
+        t_ms = (time.perf_counter() - t0) * 1000
         if raiz is None:
             raise HTTPException(status_code=400, detail=error or "No se encontró la raíz.")
-        return {"raiz": raiz, "iteraciones": rows, "n_iters": len(rows)}
+        return {"raiz": raiz, "iteraciones": rows, "n_iters": len(rows), "time_ms": t_ms}
     except HTTPException:
         raise
     except Exception as e:
@@ -79,10 +88,12 @@ def api_secante(req: SecanteRequest):
 @router.post("/punto_fijo")
 def api_punto_fijo(req: PuntoFijoRequest):
     try:
+        t0 = time.perf_counter()
         raiz, rows, error = run_punto_fijo(req)
+        t_ms = (time.perf_counter() - t0) * 1000
         if raiz is None:
             raise HTTPException(status_code=400, detail=error or "No se encontró la raíz.")
-        return {"raiz": raiz, "iteraciones": rows, "n_iters": len(rows)}
+        return {"raiz": raiz, "iteraciones": rows, "n_iters": len(rows), "time_ms": t_ms}
     except HTTPException:
         raise
     except Exception as e:
