@@ -71,8 +71,8 @@ function computeRange(allYs, allXs) {
 export default function IntegralChart({ curvaF, aproximacion, nodos, titulo }) {
   const [containerEl, setContainerEl] = useState(null)
   const [W, setW]                     = useState(800)
-  const [zoomLevel, setZoomLevel]     = useState(1.0)
   const [hovered, setHovered]         = useState(null)   // { x, y, label }
+  const [hoveredNode, setHoveredNode] = useState(null)   // { x, y }
   const [mousePos, setMousePos]       = useState({ x: 0, y: 0 })
 
   // ── ResizeObserver ─────────────────────────────────────────────────────────
@@ -108,19 +108,17 @@ export default function IntegralChart({ curvaF, aproximacion, nodos, titulo }) {
   const innW = W - pad.l - pad.r
   const innH = H - pad.t - pad.b
 
-  // ── Proyección con zoom ────────────────────────────────────────────────────
+  // ── Proyección ─────────────────────────────────────────────────────────────
   const { xMinZ, xMaxZ, yMinZ, yMaxZ, xRangeZ, yRangeZ } = useMemo(() => {
     if (!range) return { xMinZ: 0, xMaxZ: 1, yMinZ: -1, yMaxZ: 1, xRangeZ: 1, yRangeZ: 2 }
-    const cx  = (range.xMin + range.xMax) / 2
-    const cy  = (range.yMin + range.yMax) / 2
-    const xR0 = (range.xMax - range.xMin) / zoomLevel
-    const yR0 = (range.yMax - range.yMin) / zoomLevel
+    const xR0 = (range.xMax - range.xMin)
+    const yR0 = (range.yMax - range.yMin)
     return {
-      xMinZ : cx - xR0 / 2, xMaxZ: cx + xR0 / 2,
-      yMinZ : cy - yR0 / 2, yMaxZ: cy + yR0 / 2,
+      xMinZ : range.xMin, xMaxZ: range.xMax,
+      yMinZ : range.yMin, yMaxZ: range.yMax,
       xRangeZ: xR0, yRangeZ: yR0,
     }
-  }, [range, zoomLevel])
+  }, [range])
 
   const cx = useCallback(x => pad.l + ((x - xMinZ) / xRangeZ) * innW,
     [pad.l, xMinZ, xRangeZ, innW])
@@ -163,7 +161,7 @@ export default function IntegralChart({ curvaF, aproximacion, nodos, titulo }) {
 
   const zeroYPx = cy(0)
 
-  // ── Hover sobre la curva f(x) ──────────────────────────────────────────────
+  // ── Hover sobre la curva f(x) o Nodos ─────────────────────────────────────
   const handleMouseMove = useCallback(e => {
     const rect   = e.currentTarget.getBoundingClientRect()
     const scaleX = W / rect.width
@@ -171,8 +169,25 @@ export default function IntegralChart({ curvaF, aproximacion, nodos, titulo }) {
     const svgX   = (e.clientX - rect.left) * scaleX
     const svgY   = (e.clientY - rect.top)  * scaleY
 
-    if (svgX < pad.l || svgX > W - pad.r) { setHovered(null); return }
+    if (svgX < pad.l || svgX > W - pad.r) { 
+      setHovered(null)
+      setHoveredNode(null)
+      return 
+    }
 
+    for (const p of ptsNodos) {
+      const px = cx(p.x)
+      const py = cy(p.y)
+      const dist = Math.sqrt(Math.pow(svgX - px, 2) + Math.pow(svgY - py, 2))
+      if (dist < 20) {
+        setHoveredNode({ x: p.x, y: p.y })
+        setHovered(null)
+        setMousePos({ x: svgX, y: svgY })
+        return
+      }
+    }
+
+    setHoveredNode(null)
     const xVal = xMinZ + ((svgX - pad.l) / innW) * xRangeZ
     let nearest = null, minDist = Infinity
     for (const p of ptsCurva) {
@@ -183,7 +198,7 @@ export default function IntegralChart({ curvaF, aproximacion, nodos, titulo }) {
       setHovered({ x: nearest.x, y: nearest.y, label: 'f(x)' })
       setMousePos({ x: svgX, y: svgY })
     }
-  }, [ptsCurva, xMinZ, xRangeZ, W, H, innW, pad.l, pad.r])
+  }, [ptsCurva, ptsNodos, xMinZ, xRangeZ, W, H, innW, pad.l, pad.r, cx, cy])
 
   // ── Guard: no datos ────────────────────────────────────────────────────────
   if (!range || ptsCurva.length < 2) return null
@@ -191,58 +206,7 @@ export default function IntegralChart({ curvaF, aproximacion, nodos, titulo }) {
   return (
     <div style={{ width: '100%', userSelect: 'none' }}>
 
-      {/* ── CONTROLES DE ZOOM (idénticos a Chart.jsx) ── */}
-      <div
-        data-html2canvas-ignore="true"
-        style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', marginBottom: 12 }}
-      >
-        <div />
-
-        <div style={{
-          display: 'inline-flex', alignItems: 'center',
-          background: 'var(--white)', border: '1px solid var(--border)',
-          borderRadius: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-          overflow: 'hidden', height: 32,
-        }}>
-          <ZoomBtn
-            label="−"
-            onClick={() => setZoomLevel(z => Math.max(1.0, z - 0.5))}
-            disabled={zoomLevel <= 1.0}
-            side="right"
-          />
-          <span style={{
-            fontSize: '0.78rem', fontWeight: 700, minWidth: 68, textAlign: 'center',
-            color: zoomLevel !== 1.0 ? 'var(--blue)' : 'var(--slate)',
-            letterSpacing: '0.3px', padding: '0 4px', transition: 'color 0.2s',
-          }}>
-            {zoomLevel === 1.0 ? 'Zoom' : `x${zoomLevel.toFixed(1)}`}
-          </span>
-          <ZoomBtn
-            label="+"
-            onClick={() => setZoomLevel(z => Math.min(10.0, z + 0.5))}
-            disabled={zoomLevel >= 10.0}
-            side="left"
-          />
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          {zoomLevel !== 1.0 && (
-            <button
-              onClick={() => setZoomLevel(1.0)}
-              title="Restablecer zoom"
-              style={{
-                width: 32, height: 32, borderRadius: '50%',
-                border: '1px solid var(--border)', background: 'var(--white)',
-                color: 'var(--slate)', fontSize: '1rem', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                transition: 'all 0.15s', boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--blue)'; e.currentTarget.style.color = 'var(--blue)' }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--slate)' }}
-            >↺</button>
-          )}
-        </div>
-      </div>
+      {/* (Zoom eliminado según requerimientos) */}
 
       {/* ── LEYENDA ── */}
       <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginBottom: 10, flexWrap: 'wrap' }}>
@@ -255,9 +219,9 @@ export default function IntegralChart({ curvaF, aproximacion, nodos, titulo }) {
       <div ref={setContainerEl} style={{ position: 'relative', width: '100%', height: H }}>
         <svg
           width="100%" height="100%" viewBox={`0 0 ${W} ${H}`}
-          style={{ overflow: 'hidden', cursor: 'crosshair' }}
+          style={{ overflow: 'hidden', cursor: hoveredNode ? 'pointer' : 'crosshair' }}
           onMouseMove={handleMouseMove}
-          onMouseLeave={() => setHovered(null)}
+          onMouseLeave={() => { setHovered(null); setHoveredNode(null) }}
         >
           <defs>
             <clipPath id="integral-clip">
@@ -374,9 +338,17 @@ export default function IntegralChart({ curvaF, aproximacion, nodos, titulo }) {
               />
             </>
           )}
+
+          {/* ── Hover resaltado sobre Nodo ── */}
+          {hoveredNode && (
+            <circle
+              cx={cx(hoveredNode.x)} cy={cy(hoveredNode.y)} r={6}
+              fill={C.surface} stroke={C.green} strokeWidth={2.5}
+            />
+          )}
         </svg>
 
-        {/* ── Tooltip hover ── */}
+        {/* ── Tooltip hover f(x) ── */}
         {hovered && (
           <div style={{
             position: 'absolute',
@@ -396,35 +368,33 @@ export default function IntegralChart({ curvaF, aproximacion, nodos, titulo }) {
             <div>y: <span style={{ color: 'var(--blue)', fontWeight: 700 }}>{hovered.y.toFixed(6)}</span></div>
           </div>
         )}
+
+        {/* ── Tooltip hover Nodo ── */}
+        {hoveredNode && (
+          <div style={{
+            position: 'absolute',
+            top  : Math.max(pad.t, cy(hoveredNode.y) - 66),
+            left : Math.min(W - 130, cx(hoveredNode.x) + 14),
+            background: 'var(--white)', color: 'var(--navy-dark)',
+            padding: '8px 12px', borderRadius: 8,
+            pointerEvents: 'none', fontSize: 12,
+            boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
+            zIndex: 10, border: '1px solid var(--border)',
+            minWidth: 110,
+          }}>
+            <div style={{ marginBottom: 3, fontWeight: 700, borderBottom: '1px solid var(--border)', paddingBottom: 3 }}>
+              Nodo xᵢ
+            </div>
+            <div>x: <span style={{ color: 'var(--success)', fontWeight: 700 }}>{hoveredNode.x.toFixed(6)}</span></div>
+            <div>f(x): <span style={{ color: 'var(--success)', fontWeight: 700 }}>{hoveredNode.y.toFixed(6)}</span></div>
+          </div>
+        )}
       </div>
     </div>
   )
 }
 
 // ── Sub-componentes auxiliares ────────────────────────────────────────────────
-
-function ZoomBtn({ label, onClick, disabled, side }) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        width: 32, height: 32, border: 'none',
-        [`border${side === 'right' ? 'Right' : 'Left'}`]: '1px solid var(--border)',
-        background: 'transparent',
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        fontSize: '1.1rem',
-        color: disabled ? 'var(--border)' : 'var(--navy)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        transition: 'background 0.15s', flexShrink: 0,
-      }}
-      onMouseEnter={e => { if (!disabled) e.currentTarget.style.background = 'var(--surface)' }}
-      onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-    >
-      {label}
-    </button>
-  )
-}
 
 function LegendItem({ color, label, dash, fill, dot }) {
   return (

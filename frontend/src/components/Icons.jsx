@@ -13,7 +13,11 @@ import {
   Settings,
   History,
   Grid,
-  Grid3x3
+  Grid3x3,
+  TrendingUp,
+  Waypoints,
+  Focus,
+  Route
 } from 'lucide-react';
 
 const iconDefaults = {
@@ -38,3 +42,8 @@ export const IconHistory = (props) => <History {...iconDefaults} {...props} />;
 export const IconGaussJordan = (props) => <Grid {...iconDefaults} {...props} />;
 // Eliminación Gaussiana (teammate)
 export const IconMatrices = (props) => <Grid3x3 {...iconDefaults} {...props} />;
+// EDOs
+export const IconEuler = (props) => <TrendingUp {...iconDefaults} {...props} />;
+export const IconHeun = (props) => <Waypoints {...iconDefaults} {...props} />;
+export const IconPuntoMedio = (props) => <Focus {...iconDefaults} {...props} />;
+export const IconRalston = (props) => <Route {...iconDefaults} {...props} />;

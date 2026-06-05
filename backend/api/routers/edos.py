@@ -19,18 +19,32 @@ router = APIRouter(
 
 
 # =========================================
+# EULER
+# =========================================
+
+@router.post("/euler")
+def api_euler(req: EulerRequest):
+    try:
+        xs, ys, rows, error = run_euler(req)
+        if error:
+            return {"success": False, "error": error}
+        puntos = [{"x": x, "y": y} for x, y in zip(xs, ys)]
+        return {"success": True, "puntos": puntos, "tabla": rows}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+# =========================================
 # HEUN
 # =========================================
 
 @router.post("/heun")
 def api_heun(req: ODERequest):
-
-    rows = run_heun(req)
-
-    return {
-        "method": "Heun",
-        "rows": rows
-    }
+    try:
+        rows = run_heun(req)
+        return {"method": "Heun", "rows": rows}
+    except Exception as e:
+        return {"method": "Heun", "rows": [], "error": str(e)}
 
 
 # =========================================
@@ -39,13 +53,11 @@ def api_heun(req: ODERequest):
 
 @router.post("/punto-medio")
 def api_punto_medio(req: ODERequest):
-
-    rows = run_punto_medio(req)
-
-    return {
-        "method": "Punto Medio",
-        "rows": rows
-    }
+    try:
+        rows = run_punto_medio(req)
+        return {"method": "Punto Medio", "rows": rows}
+    except Exception as e:
+        return {"method": "Punto Medio", "rows": [], "error": str(e)}
 
 
 # =========================================
@@ -54,10 +66,9 @@ def api_punto_medio(req: ODERequest):
 
 @router.post("/ralston")
 def api_ralston(req: ODERequest):
+    try:
+        rows = run_ralston(req)
+        return {"method": "Ralston", "rows": rows}
+    except Exception as e:
+        return {"method": "Ralston", "rows": [], "error": str(e)}
 
-    rows = run_ralston(req)
-
-    return {
-        "method": "Ralston",
-        "rows": rows
-    }

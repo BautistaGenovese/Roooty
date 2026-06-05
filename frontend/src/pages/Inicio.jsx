@@ -2,7 +2,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import {
   IconBiseccion, IconRegulaFalsi, IconNewton, IconSecante,
   IconPuntoFijo, IconRegresion, IconComparacion,
-  IconGaussJordan, IconMatrices, IconTrapecio, IconSimpson
+  IconGaussJordan, IconMatrices, IconTrapecio, IconSimpson,
+  IconEuler, IconHeun, IconPuntoMedio, IconRalston
 } from '../components/Icons'
 import Latex from '../components/Latex'
 
@@ -19,7 +20,7 @@ export default function Inicio() {
       {/* HERO */}
       <div className="hero-banner">
         <div className="hero-text">
-          <span className="hero-badge">VERSIÓN BETA 🚀</span>
+          <span className="hero-badge">VERSIÓN 1.0.0 🚀</span>
           <h1 className="hero-title">
             <span className="logo-sigma">Σ</span>
             ROOOTY
@@ -432,6 +433,108 @@ export default function Inicio() {
               <button
                 className="try-example-btn"
                 onClick={e => { e.preventDefault(); tryExample('/integracion/simpson38', { f: 'log(x)', a: 1, b: 5, n: 9 }) }}
+              >▶ Probar ejemplo</button>
+            </div>
+          </div>
+        </Link>
+      </div>
+
+      {/* ECUACIONES DIFERENCIALES */}
+      <p className="sidebar-section-label" style={{ marginBottom: '1rem' }}>📉 ECUACIONES DIFERENCIALES — Aproxima soluciones paso a paso</p>
+      <div className="methods-grid" style={{ marginBottom: '2rem' }}>
+        <Link to="/edos/euler" style={{ textDecoration: 'none' }}>
+          <div className="method-guide-card">
+            <div className="method-guide-header">
+              <strong style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><IconEuler size={18} /> Euler</strong>
+              <span className="history-param-chip">Primer Orden</span>
+            </div>
+            <p className="method-guide-desc">Aproxima la curva asumiendo que la pendiente es constante en cada tramo. Rápido pero con mayor error.</p>
+            <div className="method-guide-when">
+              <span className="method-when-label">✅ Ideal cuando:</span>
+              <ul>
+                <li>Buscás simplicidad computacional</li>
+                <li>Podés usar pasos (h) muy pequeños</li>
+              </ul>
+            </div>
+            <div className="method-guide-example">
+              <span className="method-ex-label">📌 Ejemplo típico:</span>
+              <code>y' = x + y</code>
+              <button
+                className="try-example-btn"
+                onClick={e => { e.preventDefault(); tryExample('/edos/euler', { f: 'x + y', x0: 0, y0: 1, h: 0.1, xFinal: 2 }) }}
+              >▶ Probar ejemplo</button>
+            </div>
+          </div>
+        </Link>
+
+        <Link to="/edos/heun" style={{ textDecoration: 'none' }}>
+          <div className="method-guide-card">
+            <div className="method-guide-header">
+              <strong style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><IconHeun size={18} /> Heun</strong>
+              <span className="history-param-chip">RK2 (Mejorado)</span>
+            </div>
+            <p className="method-guide-desc">Mejora a Euler promediando las pendientes en el inicio y fin del intervalo para mayor precisión.</p>
+            <div className="method-guide-when">
+              <span className="method-when-label">✅ Ideal cuando:</span>
+              <ul>
+                <li>Querés menos error global que Euler</li>
+                <li>Necesitás convergencia más estable</li>
+              </ul>
+            </div>
+            <div className="method-guide-example">
+              <span className="method-ex-label">📌 Ejemplo típico:</span>
+              <code>y' = x*y - x²</code>
+              <button
+                className="try-example-btn"
+                onClick={e => { e.preventDefault(); tryExample('/edos/heun', { f: 'x*y - x**2', x0: 0, y0: 1, h: 0.2, xFinal: 2 }) }}
+              >▶ Probar ejemplo</button>
+            </div>
+          </div>
+        </Link>
+
+        <Link to="/edos/punto-medio" style={{ textDecoration: 'none' }}>
+          <div className="method-guide-card">
+            <div className="method-guide-header">
+              <strong style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><IconPuntoMedio size={18} /> Punto Medio</strong>
+              <span className="history-param-chip">RK2</span>
+            </div>
+            <p className="method-guide-desc">Evalúa la pendiente en la mitad del intervalo. Ideal para funciones con curvatura constante.</p>
+            <div className="method-guide-when">
+              <span className="method-when-label">✅ Ideal cuando:</span>
+              <ul>
+                <li>Querés minimizar el error del método de Euler</li>
+              </ul>
+            </div>
+            <div className="method-guide-example">
+              <span className="method-ex-label">📌 Ejemplo típico:</span>
+              <code>y' = sin(x) + y</code>
+              <button
+                className="try-example-btn"
+                onClick={e => { e.preventDefault(); tryExample('/edos/punto-medio', { f: 'sin(x) + y', x0: 0, y0: 1, h: 0.1, xFinal: 2 }) }}
+              >▶ Probar ejemplo</button>
+            </div>
+          </div>
+        </Link>
+
+        <Link to="/edos/ralston" style={{ textDecoration: 'none' }}>
+          <div className="method-guide-card">
+            <div className="method-guide-header">
+              <strong style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><IconRalston size={18} /> Ralston</strong>
+              <span className="history-param-chip">RK2</span>
+            </div>
+            <p className="method-guide-desc">Minimiza el error de truncamiento local ponderando las pendientes a 3/4 del intervalo.</p>
+            <div className="method-guide-when">
+              <span className="method-when-label">✅ Ideal cuando:</span>
+              <ul>
+                <li>Buscás el método RK2 con menor cota de error teórico</li>
+              </ul>
+            </div>
+            <div className="method-guide-example">
+              <span className="method-ex-label">📌 Ejemplo típico:</span>
+              <code>y' = exp(-x) - 2y</code>
+              <button
+                className="try-example-btn"
+                onClick={e => { e.preventDefault(); tryExample('/edos/ralston', { f: 'exp(-x) - 2*y', x0: 0, y0: 1, h: 0.1, xFinal: 2 }) }}
               >▶ Probar ejemplo</button>
             </div>
           </div>

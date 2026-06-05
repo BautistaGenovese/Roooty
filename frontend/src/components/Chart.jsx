@@ -32,7 +32,7 @@ const C = {
   iter: "var(--error)"
 };
 
-export default function Chart({ f, raiz, xMin, xMax, isPuntoFijo = false, isRegresion = false, dataPoints = null }) {
+export default function Chart({ f, raiz, xMin, xMax, isPuntoFijo = false, isRegresion = false, dataPoints = null, hideZoom = false }) {
   const [containerEl, setContainerEl] = useState(null);
   const [dimensions, setDimensions] = useState({ W: 800 });
   const [isRootHovered, setIsRootHovered] = useState(false);
@@ -175,15 +175,16 @@ export default function Chart({ f, raiz, xMin, xMax, isPuntoFijo = false, isRegr
   return (
     <div style={{ width: "100%", userSelect: "none" }}>
       {/* ZOOM CONTROLS */}
-      <div 
-        data-html2canvas-ignore="true"
-        style={{ 
-        display: 'grid', 
-        gridTemplateColumns: '1fr auto 1fr', 
-        alignItems: 'center', 
-        marginBottom: '12px',
-        width: '100%'
-      }}>
+      {!hideZoom && (
+        <div 
+          data-html2canvas-ignore="true"
+          style={{ 
+          display: 'grid', 
+          gridTemplateColumns: '1fr auto 1fr', 
+          alignItems: 'center', 
+          marginBottom: '12px',
+          width: '100%'
+        }}>
         <div /> {/* Spacer */}
 
         {/* Main zoom bar - Centered */}
@@ -209,6 +210,7 @@ export default function Chart({ f, raiz, xMin, xMax, isPuntoFijo = false, isRegr
               fontSize: '1.1rem',
               color: zoomLevel <= 1.0 ? 'var(--border)' : 'var(--navy)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
+              lineHeight: 1, padding: 0,
               transition: 'background 0.15s',
               flexShrink: 0,
             }}
@@ -243,6 +245,7 @@ export default function Chart({ f, raiz, xMin, xMax, isPuntoFijo = false, isRegr
               fontSize: '1.1rem',
               color: zoomLevel >= 10.0 ? 'var(--border)' : 'var(--navy)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
+              lineHeight: 1, padding: 0,
               transition: 'background 0.15s',
               flexShrink: 0,
             }}
@@ -271,6 +274,7 @@ export default function Chart({ f, raiz, xMin, xMax, isPuntoFijo = false, isRegr
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                lineHeight: 1, padding: 0,
                 transition: 'all 0.15s ease',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
               }}
@@ -282,6 +286,7 @@ export default function Chart({ f, raiz, xMin, xMax, isPuntoFijo = false, isRegr
           )}
         </div>
       </div>
+      )}
 
       <div ref={setContainerEl} style={{ position: "relative", width: "100%", height: H }}>
         <svg
