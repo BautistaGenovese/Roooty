@@ -6,6 +6,7 @@ Cada modelo define la estructura de datos que reciben los endpoints.
 
 from pydantic import BaseModel
 from typing import List
+from typing import Optional
 
 
 class BaseRequest(BaseModel):
@@ -91,9 +92,16 @@ class IntegracionRequest(BaseModel):
     b: float
     n: int = 100
     trig_mode: str = "Radianes"
-from pydantic import BaseModel
-from typing import Optional
- 
+
+
+class ODERequest(BaseModel):
+    f: str
+    x0: float
+    y0: float
+    h: float
+    n: int
+    trig_mode: str = "rad"
+
 
 class EulerRequest(BaseModel):
     f: str                        # función f(x, y) como string, ej: "x + y"
@@ -104,7 +112,6 @@ class EulerRequest(BaseModel):
     max_iters: int = 100
     trig_mode: str = "rad"        # "rad" | "deg"
  
-
 
 class GaussJordanRequest(BaseModel):
     """Gauss-Jordan: recibe la matriz A (n×n) y el vector b (n) del sistema Ax=b."""

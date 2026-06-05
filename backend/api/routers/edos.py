@@ -4,22 +4,60 @@ from fastapi import APIRouter
 from api.models.schemas import EulerRequest
 from api.algorithms.euler import run_euler
 
-router = APIRouter(prefix="/api/edos", tags=["EDOs"])
+from api.models.schemas import ODERequest
+
+from api.algorithms.rk2 import (
+    run_heun,
+    run_punto_medio,
+    run_ralston
+)
+
+router = APIRouter(
+    prefix="/api/edos",
+    tags=["EDOs"]
+)
 
 
-@router.post("/euler")
-def euler(req: EulerRequest):
-    xs, ys, rows, error = run_euler(req)
+# =========================================
+# HEUN
+# =========================================
 
-    if error:
-        return {"success": False, "error": error}
+@router.post("/heun")
+def api_heun(req: ODERequest):
 
-    puntos = [{"x": x, "y": y} for x, y in zip(xs, ys)]
+    rows = run_heun(req)
 
     return {
-        "success": True,
-        "puntos": puntos,
-        "tabla": rows,
-        "x_final": xs[-1] if xs else None,
-        "y_final": ys[-1] if ys else None,
+        "method": "Heun",
+        "rows": rows
+    }
+
+
+# =========================================
+# PUNTO MEDIO
+# =========================================
+
+@router.post("/punto-medio")
+def api_punto_medio(req: ODERequest):
+
+    rows = run_punto_medio(req)
+
+    return {
+        "method": "Punto Medio",
+        "rows": rows
+    }
+
+
+# =========================================
+# RALSTON
+# =========================================
+
+@router.post("/ralston")
+def api_ralston(req: ODERequest):
+
+    rows = run_ralston(req)
+
+    return {
+        "method": "Ralston",
+        "rows": rows
     }
