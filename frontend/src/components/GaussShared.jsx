@@ -174,12 +174,12 @@ export function PasosRender({ pasos }) {
 
   return (
     <div style={{ marginTop: '1.5rem' }}>
-      <Expander title="Procedimiento Paso a Paso" badge={`${filtered.length} PASOS`}>
+      <Expander className="expander--table" title="Procedimiento Paso a Paso" badge={`${filtered.length} PASOS`}>
         <div className="gauss-steps-container">
           {filtered.map((paso, i) => {
             const accent = getStepAccent(paso)
             return (
-              <div key={i} className="gauss-step-card" style={{ borderLeftColor: accent }}>
+              <div key={i} className="gauss-step-card">
                 {/* Cabecera del paso */}
                 <div className="gauss-step-header">
                   <span className="gauss-step-number" style={{ background: accent }}>
