@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useLocalStorage } from '../hooks/useLocalStorage'
 import { useSearchParams } from 'react-router-dom'
 import { useSettings } from '../hooks/useSettings'
 import { useHistory } from '../hooks/useHistory'
@@ -17,8 +18,8 @@ export default function PuntoFijo() {
   const [mode, setMode] = useState('manual') // 'manual' | 'auto'
   const [g, setG] = useState('')
   const [fAuto, setFAuto] = useState('')
-  const [x0, setX0] = useState(0)
-  const [prec, setPrec] = useState(2)
+  const [x0, setX0] = useLocalStorage('PuntoFijo_x0', '')
+  const [prec, setPrec] = useLocalStorage('PuntoFijo_prec', 2)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -31,6 +32,14 @@ export default function PuntoFijo() {
   }, [])
 
   const formula = mode === 'manual' ? g : `x - (${fAuto})`
+
+  
+  const handleClear = () => {
+    setPrec(2)
+    setX0('')
+    setResult(null)
+    setError(null)
+  }
 
   async function calcular() {
     if (!formula.trim()) { setError('Ingresa una función.'); return }
@@ -83,14 +92,14 @@ export default function PuntoFijo() {
       {mode === 'manual' ? (
         <FormulaInput
           value={g} onChange={setG}
-          placeholder="Ejemplo: (x + 2)**(0.5)"
+          placeholder="Ej: (x + 2)**(0.5)"
         />
       ) : (
         <div className="form-group">
           <label className="form-label">Función original f(x):</label>
           <input
             className="form-input" value={fAuto} onChange={e => setFAuto(e.target.value)}
-            placeholder="Ejemplo: x**2 - x - 2" spellCheck={false}
+            placeholder="Ej: x**2 - x - 2" spellCheck={false}
           />
           <p className="form-caption">Transformación aplicada: g(x) = x - f(x)</p>
         </div>
@@ -98,7 +107,7 @@ export default function PuntoFijo() {
 
       <div className="form-group">
         <label className="form-label">Ingresar x₀</label>
-        <input className="form-number" type="number" value={x0} step={2} onChange={e => setX0(parseFloat(e.target.value))} />
+        <input className="form-number" type="number" value={x0} step={2} placeholder='Ej: 0' onChange={e => setX0(parseFloat(e.target.value))} />
       </div>
       <PrecisionSlider value={prec} onChange={setPrec} />
       {error && <div className="alert alert-error">{error}</div>}
@@ -145,6 +154,7 @@ export default function PuntoFijo() {
       teoria={teoria}
       inputs={inputs}
       onCalcular={loading ? null : calcular}
+      onClear={handleClear}
       result={resultPanel}
       codeRaw={code}
       iteraciones={result?.iteraciones}

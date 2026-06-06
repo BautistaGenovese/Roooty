@@ -9,6 +9,7 @@
  */
 
 import { useState, useEffect } from 'react'
+import { useLocalStorage } from '../../hooks/useLocalStorage'
 import { useSearchParams } from 'react-router-dom'
 import { useSettings } from '../../hooks/useSettings'
 import { useHistory } from '../../hooks/useHistory'
@@ -23,7 +24,7 @@ import MethodLayout, {
 import IntegralChart from './IntegralChart'
 
 const COLS = [
-  { key: 'x',  label: 'xᵢ'    },
+  { key: 'x', label: 'xᵢ' },
   { key: 'fx', label: 'f(xᵢ)' },
 ]
 
@@ -74,14 +75,14 @@ export default function Simpson13() {
   const { push: pushHistory } = useHistory()
   const [searchParams] = useSearchParams()
 
-  const [f, setF]   = useState('')
-  const [a, setA]   = useState(0)
-  const [b, setB]   = useState(1)
-  const [n, setN]   = useState(10)
+  const [f, setF] = useLocalStorage('Simpson13_f', '')
+  const [a, setA] = useLocalStorage('Simpson13_a', '')
+  const [b, setB] = useLocalStorage('Simpson13_b', '')
+  const [n, setN] = useLocalStorage('Simpson13_n', '')
 
   const [resultado, setResultado] = useState(null)
-  const [error, setError]         = useState(null)
-  const [loading, setLoading]     = useState(false)
+  const [error, setError] = useState(null)
+  const [loading, setLoading] = useState(false)
 
   const MAX_OPTIMO = 500
   const MAX_ABSOLUTO = MAX_OPTIMO + 10
@@ -113,11 +114,20 @@ export default function Simpson13() {
 
   const nEsPar = Number(n) % 2 === 0
 
+  
+  const handleClear = () => {
+    setF('')
+    setA('')
+    setB('')
+    setN('')
+    setError(null)
+  }
+
   async function calcular() {
-    if (!f.trim())      { setError('Ingresa una función f(x).'); return }
-    if (!nEsPar)        { setError(`Simpson 1/3 requiere n PAR. Prueba con n=${Number(n) + 1}.`); return }
+    if (!f.trim()) { setError('Ingresa una función f(x).'); return }
+    if (!nEsPar) { setError(`Simpson 1/3 requiere n PAR. Prueba con n=${Number(n) + 1}.`); return }
     if (Number(n) <= 0) { setError('n debe ser mayor que 0.'); return }
-    if (a >= b)         { setError('El límite inferior a debe ser menor que b.'); return }
+    if (a >= b) { setError('El límite inferior a debe ser menor que b.'); return }
     setLoading(true); setError(null)
     try {
       const data = await apiPost('integracion/simpson13', {
@@ -163,26 +173,26 @@ export default function Simpson13() {
 
   const inputs = (
     <>
-      <FormulaInput value={f} onChange={setF} placeholder="Ejemplo: x**2 + sin(x)" />
+      <FormulaInput value={f} onChange={setF} placeholder="Ej: x**2 + sin(x)" />
       <div className="input-col-2">
         <div className="form-group">
           <label className="form-label">Límite inferior a</label>
-          <input className="form-number" type="number" value={a} step={0.5}
+          <input className="form-number" type="number" value={a} step={0.5} placeholder='Ej: 0'
             onChange={e => setA(parseFloat(e.target.value))} />
         </div>
         <div className="form-group">
           <label className="form-label">Límite superior b</label>
-          <input className="form-number" type="number" value={b} step={0.5}
+          <input className="form-number" type="number" value={b} step={0.5} placeholder='Ej: 1'
             onChange={e => setB(parseFloat(e.target.value))} />
         </div>
       </div>
       <div className="form-group">
         <label className="form-label">
           Número de intervalos n
-          <span style={{ marginLeft: 6, fontSize: '0.75rem', color: 'var(--slate)' }}>(debe ser PAR)</span>
+          <span style={{ marginLeft: 6, fontSize: '0.75rem', color: 'var(--slate)' }}>(debe ser PAR &gt; 0)</span>
         </label>
         <input
-          className="form-number" type="number" min={2} step={2} value={n}
+          className="form-number" type="number" min={2} step={2} value={n} placeholder='Ej: 10'
           onChange={handleNChange}
           max={Number(n) > MAX_OPTIMO ? MAX_ABSOLUTO : undefined}
           style={{ borderColor: !nEsPar && Number(n) > 0 ? 'var(--error, #ef4444)' : undefined }}
@@ -242,6 +252,7 @@ print(f"Integral ≈ {resultado:.8f}")`
       teoria={teoria}
       inputs={inputs}
       onCalcular={loading ? null : calcular}
+      onClear={handleClear}
       result={resultado ? <IntegralResultPanel resultado={resultado} /> : <EmptyPanel />}
       codeRaw={codeRaw}
       /* FIX #1: Tabla delegada al MethodLayout con IterTable compartido */

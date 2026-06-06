@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useLocalStorage } from '../hooks/useLocalStorage'
 import { apiPost } from '../utils/api'
 import Latex from '../components/Latex'
 import MethodLayout, { Expander, EmptyPanel, PdfButton, MetricsBar, IterTable, VSCodeBlock, ResultsPanel } from '../components/MethodLayout'
@@ -10,7 +11,7 @@ const REG_COLS = [
 ]
 
 export default function Regresion() {
-  const [puntos, setPuntos] = useState([{ x: '', y: '' }, { x: '', y: '' }, { x: '', y: '' }])
+  const [puntos, setPuntos] = useLocalStorage('Regresion_puntos', [{ x: '', y: '' }, { x: '', y: '' }, { x: '', y: '' }])
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -21,6 +22,13 @@ export default function Regresion() {
   }
   function addRow() { setPuntos(pts => [...pts, { x: '', y: '' }]) }
   function removeRow(i) { if (puntos.length > 2) setPuntos(pts => pts.filter((_, idx) => idx !== i)) }
+
+
+  const handleClear = () => {
+    setPuntos([{ x: '', y: '' }])
+    setResult(null)
+    setError(null)
+  }
 
   async function calcular() {
     const valid = puntos.filter(p => p.x !== '' && p.y !== '' && !isNaN(parseFloat(p.x)) && !isNaN(parseFloat(p.y)))
@@ -107,18 +115,18 @@ export default function Regresion() {
       </div>
       {error && <div className="alert alert-error">{error}</div>}
       {result && (
-        <PdfButton 
-          title="Regresión Lineal" 
-          params={{ 
-            'Puntos ingresados': result.xv?.length || 0, 
-            'Pendiente (m)': result.m?.toFixed(4), 
-            'Ordenada (b)': result.b?.toFixed(4), 
-            'R²': result.r2?.toFixed(4) 
-          }} 
+        <PdfButton
+          title="Regresión Lineal"
+          params={{
+            'Puntos ingresados': result.xv?.length || 0,
+            'Pendiente (m)': result.m?.toFixed(4),
+            'Ordenada (b)': result.b?.toFixed(4),
+            'R²': result.r2?.toFixed(4)
+          }}
           result={{
             ...result,
             iteraciones: result.xv.map((x, i) => ({ x, y: result.yv[i] }))
-          }} 
+          }}
           columns={REG_COLS}
           chartId="chart-container"
         />
@@ -176,6 +184,7 @@ export default function Regresion() {
       teoria={teoria}
       inputs={inputs}
       onCalcular={loading ? null : calcular}
+      onClear={handleClear}
       result={resultPanel}
       codeRaw={code}
       extra={extra}

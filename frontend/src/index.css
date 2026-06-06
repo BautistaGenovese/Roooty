@@ -2447,7 +2447,7 @@ html.dark .code-block {
 }
 
 /* ─── RESPONSIVE ──────────────────────────────────────────── */
-@media (max-width: 900px) {
+@media (max-width: 1280px) {
   .app-shell {
     flex-direction: column;
   }
@@ -2569,6 +2569,11 @@ html.dark .code-block {
 
   .feature-grid {
     grid-template-columns: 1fr;
+  }
+
+  .page-content-wrap {
+    max-width: 850px;
+    margin: 0 auto;
   }
 
   .hero-anim {

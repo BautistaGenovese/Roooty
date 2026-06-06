@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useLocalStorage } from '../hooks/useLocalStorage'
 import { useSearchParams } from 'react-router-dom'
 import { useSettings } from '../hooks/useSettings'
 import { useHistory } from '../hooks/useHistory'
@@ -16,10 +17,10 @@ export default function RegulaFalsi() {
   const { settings } = useSettings()
   const { push: pushHistory } = useHistory()
   const [searchParams] = useSearchParams()
-  const [f, setF] = useState('')
-  const [a, setA] = useState(-10)
-  const [b, setB] = useState(10)
-  const [prec, setPrec] = useState(2)
+  const [f, setF] = useLocalStorage('RegulaFalsi_f', '')
+  const [a, setA] = useLocalStorage('RegulaFalsi_a', '')
+  const [b, setB] = useLocalStorage('RegulaFalsi_b', '')
+  const [prec, setPrec] = useLocalStorage('RegulaFalsi_prec', 2)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -32,6 +33,16 @@ export default function RegulaFalsi() {
     if (pa !== null) setA(parseFloat(pa))
     if (pb !== null) setB(parseFloat(pb))
   }, [])
+
+  
+  const handleClear = () => {
+    setF('')
+    setA('')
+    setB('')
+    setPrec(2)
+    setResult(null)
+    setError(null)
+  }
 
   async function calcular() {
     if (!f.trim()) { setError('Ingresa una función.'); return }
@@ -73,11 +84,11 @@ export default function RegulaFalsi() {
       <div className="input-col-2">
         <div className="form-group">
           <label className="form-label">Límite a</label>
-          <input className="form-number" type="number" value={a} step={2} onChange={e => setA(parseFloat(e.target.value))} />
+          <input className="form-number" type="number" value={a} step={2} placeholder='Ej: -10' onChange={e => setA(parseFloat(e.target.value))} />
         </div>
         <div className="form-group">
           <label className="form-label">Límite b</label>
-          <input className="form-number" type="number" value={b} step={2} onChange={e => setB(parseFloat(e.target.value))} />
+          <input className="form-number" type="number" value={b} step={2} placeholder='Ej: 10' onChange={e => setB(parseFloat(e.target.value))} />
         </div>
       </div>
       <PrecisionSlider value={prec} onChange={setPrec} />
@@ -133,6 +144,7 @@ export default function RegulaFalsi() {
       teoria={teoria}
       inputs={inputs}
       onCalcular={loading ? null : calcular}
+      onClear={handleClear}
       result={resultPanel}
       codeRaw={code}
       iteraciones={result?.iteraciones}
