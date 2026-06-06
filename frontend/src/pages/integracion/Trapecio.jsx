@@ -11,6 +11,7 @@
  */
 
 import { useState, useEffect } from 'react'
+import { useLocalStorage } from '../../hooks/useLocalStorage'
 import { useSearchParams } from 'react-router-dom'
 import { useSettings } from '../../hooks/useSettings'
 import { useHistory } from '../../hooks/useHistory'
@@ -27,7 +28,7 @@ import IntegralChart from './IntegralChart'
 
 // ── Columnas de la tabla — misma estructura que COLS en Biseccion.jsx ────────
 const COLS = [
-  { key: 'x',  label: 'xᵢ'    },
+  { key: 'x', label: 'xᵢ' },
   { key: 'fx', label: 'f(xᵢ)' },
 ]
 
@@ -54,14 +55,14 @@ function IntegralResultPanel({ resultado }) {
 
       {/* Métricas — FIX #2: gap + paddingLeft para evitar superposición con divider */}
       <div className="metrics-bar" style={{ gap: '16px' }}>
-        <div className="metric-item" style={{ flex: 1 }}>
+        <div className="metric-item" style={{ flex: 2 }}>
           <div className="metric-label">∫ f(x) dx ≈</div>
           <div className="metric-value" style={{ fontSize: '1.6rem' }}>
             {Number(integral).toFixed(8)}
           </div>
         </div>
         <div className="metric-divider" />
-        <div className="metric-item" style={{ paddingLeft: '16px' }}>
+        <div className="metric-item" style={{ flex: 1 }}>
           <div className="metric-label">Nodos evaluados</div>
           <div className="metric-value">{puntos.length}</div>
         </div>
@@ -88,14 +89,14 @@ export default function Trapecio() {
   const { push: pushHistory } = useHistory()
   const [searchParams] = useSearchParams()
 
-  const [f, setF]   = useState('')
-  const [a, setA]   = useState(0)
-  const [b, setB]   = useState(1)
-  const [n, setN]   = useState(10)
+  const [f, setF] = useLocalStorage('Trapecio_f', '')
+  const [a, setA] = useLocalStorage('Trapecio_a', '')
+  const [b, setB] = useLocalStorage('Trapecio_b', '')
+  const [n, setN] = useLocalStorage('Trapecio_n', '')
 
   const [resultado, setResultado] = useState(null)
-  const [error, setError]         = useState(null)
-  const [loading, setLoading]     = useState(false)
+  const [error, setError] = useState(null)
+  const [loading, setLoading] = useState(false)
 
   const MAX_OPTIMO = 500
   const MAX_ABSOLUTO = MAX_OPTIMO + 10
@@ -125,10 +126,19 @@ export default function Trapecio() {
     if (pn !== null) setN(parseInt(pn))
   }, [])
 
+
+  const handleClear = () => {
+    setF('')
+    setA('')
+    setB('')
+    setN('')
+    setError(null)
+  }
+
   async function calcular() {
     if (!f.trim()) { setError('Ingresa una función f(x).'); return }
-    if (n <= 0)    { setError('El número de intervalos n debe ser mayor que 0.'); return }
-    if (a >= b)    { setError('El límite inferior a debe ser menor que b.'); return }
+    if (n <= 0) { setError('El número de intervalos n debe ser mayor que 0.'); return }
+    if (a >= b) { setError('El límite inferior a debe ser menor que b.'); return }
     setLoading(true); setError(null)
     try {
       const data = await apiPost('integracion/trapecio', {
@@ -174,16 +184,16 @@ export default function Trapecio() {
 
   const inputs = (
     <>
-      <FormulaInput value={f} onChange={setF} placeholder="Ejemplo: x**2 + sin(x)" />
+      <FormulaInput value={f} onChange={setF} placeholder="Ej: x**2 + sin(x)" />
       <div className="input-col-2">
         <div className="form-group">
           <label className="form-label">Límite inferior a</label>
-          <input className="form-number" type="number" value={a} step={0.5}
+          <input className="form-number" type="number" value={a} step={0.5} placeholder='Ej: 0'
             onChange={e => setA(parseFloat(e.target.value))} />
         </div>
         <div className="form-group">
           <label className="form-label">Límite superior b</label>
-          <input className="form-number" type="number" value={b} step={0.5}
+          <input className="form-number" type="number" value={b} step={0.5} placeholder='Ej: 1'
             onChange={e => setB(parseFloat(e.target.value))} />
         </div>
       </div>
@@ -194,14 +204,15 @@ export default function Trapecio() {
             (cualquier entero &gt; 0)
           </span>
         </label>
-        <input 
-          className="form-number" 
-          type="number" 
-          min={1} 
+        <input
+          className="form-number"
+          type="number"
+          min={1}
           max={Number(n) > MAX_OPTIMO ? MAX_ABSOLUTO : undefined}
-          step={1} 
+          step={1}
           value={n}
-          onChange={handleNChange} 
+          placeholder='Ej: 10'
+          onChange={handleNChange}
         />
         {Number(n) > MAX_OPTIMO && (
           <p style={{ fontSize: '0.78rem', color: '#d97706', marginTop: 4, fontWeight: 600 }}>
@@ -260,6 +271,7 @@ print(f"Integral ≈ {resultado:.8f}")`
       teoria={teoria}
       inputs={inputs}
       onCalcular={loading ? null : calcular}
+      onClear={handleClear}
       result={resultPanel}
       codeRaw={codeRaw}
       /* FIX #1: Tabla delegada al MethodLayout — se renderiza fuera de

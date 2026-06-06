@@ -24,8 +24,12 @@ export function HistoryProvider({ children }) {
     setHasUnseen(false)
   }, [])
 
+  const removeItem = useCallback((id) => {
+    setEntries(prev => prev.filter(e => e.id !== id))
+  }, [])
+
   return (
-    <HistoryContext.Provider value={{ entries, hasUnseen, push, markSeen, clear }}>
+    <HistoryContext.Provider value={{ entries, hasUnseen, push, markSeen, clear, removeItem }}>
       {children}
     </HistoryContext.Provider>
   )

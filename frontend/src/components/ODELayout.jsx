@@ -26,7 +26,7 @@ export function ODEResultsPanel({
 }
 
 // ─── ODE LAYOUT ───────────────────────────────────────────────────────────────
-export default function ODELayout({ title, badge, teoria, inputs, onCalcular, result, codeRaw, iteraciones, columns, extra }) {
+export default function ODELayout({ title, badge, teoria, inputs, onCalcular, onClear, result, codeRaw, iteraciones, columns, extra }) {
   const [copied, setCopied] = useState(false)
   const handleCopy = () => {
     if (!codeRaw) return
@@ -49,8 +49,20 @@ export default function ODELayout({ title, badge, teoria, inputs, onCalcular, re
         {/* LEFT — INPUTS */}
         <div className="card">
           <div className="card-header">
-            <h4>Parámetros de la EDO</h4>
+            <h4>Parámetros</h4>
             <span className="history-param-chip">{badge}</span>
+            {onClear && (
+              <button
+                className="btn-clear-matrix"
+                onClick={onClear}
+                title="Limpiar campos"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            )}
           </div>
 
           <div>

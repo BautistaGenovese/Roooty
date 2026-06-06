@@ -461,7 +461,7 @@ export default function Inicio() {
               <code>y' = x + y</code>
               <button
                 className="try-example-btn"
-                onClick={e => { e.preventDefault(); tryExample('/edos/euler', { f: 'x + y', x0: 0, y0: 1, h: 0.1, xFinal: 2 }) }}
+                onClick={e => { e.preventDefault(); tryExample('/edos/euler', { f: 'x + y', x0: 0, y0: 1, h: 0.1, x_final: 2 }) }}
               >▶ Probar ejemplo</button>
             </div>
           </div>
@@ -483,10 +483,10 @@ export default function Inicio() {
             </div>
             <div className="method-guide-example">
               <span className="method-ex-label">📌 Ejemplo típico:</span>
-              <code>y' = x*y - x²</code>
+              <code>y' = x·y - x²</code>
               <button
                 className="try-example-btn"
-                onClick={e => { e.preventDefault(); tryExample('/edos/heun', { f: 'x*y - x**2', x0: 0, y0: 1, h: 0.2, xFinal: 2 }) }}
+                onClick={e => { e.preventDefault(); tryExample('/edos/heun', { f: 'x*y - x**2', x0: 0, y0: 1, h: 0.2, n: 10 }) }}
               >▶ Probar ejemplo</button>
             </div>
           </div>
@@ -510,7 +510,7 @@ export default function Inicio() {
               <code>y' = sin(x) + y</code>
               <button
                 className="try-example-btn"
-                onClick={e => { e.preventDefault(); tryExample('/edos/punto-medio', { f: 'sin(x) + y', x0: 0, y0: 1, h: 0.1, xFinal: 2 }) }}
+                onClick={e => { e.preventDefault(); tryExample('/edos/punto-medio', { f: 'sin(x) + y', x0: 0, y0: 1, h: 0.1, n: 20 }) }}
               >▶ Probar ejemplo</button>
             </div>
           </div>
@@ -534,7 +534,7 @@ export default function Inicio() {
               <code>y' = exp(-x) - 2y</code>
               <button
                 className="try-example-btn"
-                onClick={e => { e.preventDefault(); tryExample('/edos/ralston', { f: 'exp(-x) - 2*y', x0: 0, y0: 1, h: 0.1, xFinal: 2 }) }}
+                onClick={e => { e.preventDefault(); tryExample('/edos/ralston', { f: 'exp(-x) - 2*y', x0: 0, y0: 1, h: 0.1, n: 20 }) }}
               >▶ Probar ejemplo</button>
             </div>
           </div>

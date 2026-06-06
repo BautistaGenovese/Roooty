@@ -3,9 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Chart from './Chart'
 import { fetchChartData } from '../utils/api'
 import { useSettings } from '../hooks/useSettings'
-import { jsPDF } from 'jspdf'
-import autoTable from 'jspdf-autotable'
-import html2canvas from 'html2canvas'
+import { generateMethodPdf } from '../utils/pdfGenerator'
 import Latex from './Latex'
 
 export function formatMathToLatex(f) {
@@ -19,15 +17,6 @@ export function formatMathToLatex(f) {
     tex = tex.replace(regex, `\\${fn}`);
   });
   return tex;
-}
-
-function sanitizeSubscripts(str) {
-  if (!str) return '';
-  const map = {
-    '₀': '0', '₁': '1', '₂': '2', '₃': '3', '₄': '4', '₅': '5', '₆': '6', '₇': '7', '₈': '8', '₉': '9',
-    '₊': '+', '₋': '-', '₌': '=', '₍': '(', '₎': ')', 'ₙ': 'n', 'ᵢ': 'i', 'ⱼ': 'j', 'ₖ': 'k'
-  };
-  return str.split('').map(char => map[char] || char).join('');
 }
 
 export function Expander({ title, children, className = '', badge = null }) {
@@ -52,10 +41,10 @@ export function Expander({ title, children, className = '', badge = null }) {
 
 export function VSCodeBlock({ code }) {
   const KEYWORDS = new Set([
-    'def','if','else','elif','for','while','return','import','from',
-    'as','None','True','False','break','continue','in','pass','with',
-    'try','except','finally','raise','range','abs','and','or','not','is',
-    'lambda','class','global','nonlocal','del','yield','assert','print',
+    'def', 'if', 'else', 'elif', 'for', 'while', 'return', 'import', 'from',
+    'as', 'None', 'True', 'False', 'break', 'continue', 'in', 'pass', 'with',
+    'try', 'except', 'finally', 'raise', 'range', 'abs', 'and', 'or', 'not', 'is',
+    'lambda', 'class', 'global', 'nonlocal', 'del', 'yield', 'assert', 'print',
   ])
 
   const esc = (s) =>
@@ -94,9 +83,9 @@ export function VSCodeBlock({ code }) {
         let j = i
         while (j < src.length && /\w/.test(src[j])) j++
         const word = src.slice(i, j)
-        if (KEYWORDS.has(word))   tokens.push({ type: 'keyword',  value: word })
+        if (KEYWORDS.has(word)) tokens.push({ type: 'keyword', value: word })
         else if (src[j] === '(') tokens.push({ type: 'function', value: word })
-        else                      tokens.push({ type: 'plain',    value: word })
+        else tokens.push({ type: 'plain', value: word })
         i = j
         continue
       }
@@ -124,7 +113,7 @@ export function VSCodeBlock({ code }) {
             return type === 'plain' ? v : `<span class="${type}">${v}</span>`
           })
           .join('')
-        
+
         return (
           <div key={i} className="code-line">
             <span className="line-number">{i + 1}</span>
@@ -135,8 +124,6 @@ export function VSCodeBlock({ code }) {
     </div>
   )
 }
-
-
 
 // ─── ITERATIONS TABLE ─────────────────────────────────────────────────────────
 export function IterTable({ rows, columns }) {
@@ -186,7 +173,7 @@ export function PrecisionSlider({ value, onChange }) {
 }
 
 // ─── FORMULA INPUT ────────────────────────────────────────────────────────────
-export function FormulaInput({ value, onChange, placeholder = 'Ejemplo: x**2 + 11*x - 6' }) {
+export function FormulaInput({ value, onChange, placeholder = 'Ej: x**2 + 11*x - 6' }) {
   return (
     <div className="form-group">
       <label className="form-label">Función f(x):</label>
@@ -239,97 +226,7 @@ export function PdfButton({ title, f, params, result, columns }) {
   const handleGenerate = async () => {
     setIsGenerating(true);
     try {
-      const doc = new jsPDF({ format: 'letter' });
-      const pw = doc.internal.pageSize.getWidth();
-      
-      // Title
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(18);
-      doc.setTextColor(59, 130, 246); // var(--blue)
-      doc.text(`Reporte de Análisis Numérico - Rooty`, pw / 2, 20, { align: 'center' });
-
-      // Divider
-      doc.setDrawColor(226, 232, 240); // var(--border)
-      doc.setLineWidth(0.5);
-      doc.line(14, 25, pw - 14, 25);
-
-      // Info text
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(30, 41, 59); // navy-dark
-      
-      let y = 35;
-      if (title && f) {
-        doc.text(`Método de ${title}: f(x) = ${f}`, 14, y);
-        y += 8;
-      }
-      
-      if (params) {
-        const paramStr = Object.entries(params)
-          .map(([k,v]) => `${sanitizeSubscripts(k)}: ${v}`)
-          .join(', ');
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(30, 41, 59);
-        doc.text(`Parámetros: ${paramStr}`, 14, y);
-        y += 8;
-      }
-
-      if (result && result.raiz !== undefined && result.raiz !== null) {
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(0, 230, 118); // var(--success)
-        doc.text(`Raíz encontrada: x = ${Number(result.raiz).toFixed(6)}`, 14, y);
-        y += 15;
-      } else {
-        y += 7;
-      }
-
-      // Chart
-      const chartEl = document.getElementById('chart-pdf-container');
-      if (chartEl) {
-        const canvas = await html2canvas(chartEl, { 
-          scale: 3, 
-          useCORS: true,
-          logging: false 
-        });
-        const imgData = canvas.toDataURL('image/png');
-        const imgProps = doc.getImageProperties(imgData);
-        
-        let displayWidth = pw - 28;
-        let displayHeight = (imgProps.height * displayWidth) / imgProps.width;
-        
-        // Cap height to 110mm (more generous than 85mm to avoid "tiny" charts on mobile)
-        if (displayHeight > 110) {
-          displayHeight = 110;
-          displayWidth = (imgProps.width * displayHeight) / imgProps.height;
-        }
-        
-        const xOffset = (pw - displayWidth) / 2;
-        doc.addImage(imgData, 'PNG', xOffset, y, displayWidth, displayHeight);
-        y += displayHeight + 10;
-      }
-
-      // Table
-      if (result && result.iteraciones && columns) {
-        const head = [ ['Iter', ...columns.map(c => c.label)] ];
-        const body = result.iteraciones.map((row, i) => [
-          i,
-          ...columns.map(c => row[c.key] != null ? (typeof row[c.key] === 'number' ? row[c.key].toFixed(6) : row[c.key]) : '—')
-        ]);
-
-        autoTable(doc, {
-          startY: y,
-          head: head,
-          body: body,
-          theme: 'grid',
-          headStyles: { fillColor: [59, 130, 246], textColor: 255, halign: 'center' },
-          bodyStyles: { halign: 'center' },
-          alternateRowStyles: { fillColor: [248, 250, 252] },
-          margin: { left: 14, right: 14 }
-        });
-      }
-
-      doc.save(`Reporte_${title || 'Metodo'}.pdf`);
+      await generateMethodPdf({ title, f, params, result, columns });
     } catch (err) {
       console.error(err);
     } finally {
@@ -360,7 +257,19 @@ export function ResultsPanel({
 
   useEffect(() => {
     if (!f || raiz == null || isRegresion) return
-    fetchChartData(f, xMin, xMax, settings.trigMode)
+
+    // Ajustar el rango de datos para que esté centrado en la raíz
+    // y coincida exactamente con la ventana visual de Chart.jsx
+    let fetchXMin = xMin;
+    let fetchXMax = xMax;
+    if (raiz != null && Number.isFinite(raiz)) {
+      // El rango original (ancho de la ventana)
+      const range = (xMax - xMin) || 10;
+      fetchXMin = raiz - range / 2;
+      fetchXMax = raiz + range / 2;
+    }
+
+    fetchChartData(f, fetchXMin, fetchXMax, settings.trigMode)
       .then(setChartData)
       .catch(console.error)
   }, [f, raiz, xMin, xMax, isRegresion, settings.trigMode])
@@ -400,7 +309,7 @@ export function ResultsPanel({
 }
 
 // ─── METHOD PAGE LAYOUT ───────────────────────────────────────────────────────
-export default function MethodLayout({ title, badge, teoria, inputs, onCalcular, result, codeRaw, iteraciones, columns, extra }) {
+export default function MethodLayout({ title, badge, teoria, inputs, onCalcular, onClear, result, codeRaw, iteraciones, columns, extra }) {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = () => {
@@ -424,8 +333,22 @@ export default function MethodLayout({ title, badge, teoria, inputs, onCalcular,
         {/* LEFT — INPUTS */}
         <div className="card">
           <div className="card-header">
-            <h4>Parámetros</h4>
-            <span className="history-param-chip">{badge}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <h4>Parámetros</h4>
+              <span className="history-param-chip">{badge}</span>
+            </div>
+            {onClear && (
+              <button
+                className="btn-clear-matrix"
+                onClick={onClear}
+                title="Limpiar campos"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            )}
           </div>
 
           <div>
@@ -490,15 +413,15 @@ export function CompareButton({ f, prec, metA, paramsA }) {
   }
 
   return (
-    <button 
-      className="btn btn-secondary" 
+    <button
+      className="btn btn-secondary"
       onClick={handleCompare}
-      style={{ 
-        width: '100%', 
-        marginTop: '1rem', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
+      style={{
+        width: '100%',
+        marginTop: '1rem',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         gap: '8px',
         fontWeight: 700,
         fontSize: '0.85rem'

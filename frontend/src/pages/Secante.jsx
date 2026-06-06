@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useLocalStorage } from '../hooks/useLocalStorage'
 import { useSearchParams } from 'react-router-dom'
 import { useSettings } from '../hooks/useSettings'
 import { useHistory } from '../hooks/useHistory'
@@ -16,10 +17,10 @@ export default function Secante() {
   const { settings } = useSettings()
   const { push: pushHistory } = useHistory()
   const [searchParams] = useSearchParams()
-  const [f, setF] = useState('')
-  const [xn, setXn] = useState(-10)
-  const [xn1, setXn1] = useState(10)
-  const [prec, setPrec] = useState(2)
+  const [f, setF] = useLocalStorage('Secante_f', '')
+  const [xn, setXn] = useLocalStorage('Secante_xn', '')
+  const [xn1, setXn1] = useLocalStorage('Secante_xn1', '')
+  const [prec, setPrec] = useLocalStorage('Secante_prec', 2)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -32,6 +33,16 @@ export default function Secante() {
     if (pxn !== null) setXn(parseFloat(pxn))
     if (pxn1 !== null) setXn1(parseFloat(pxn1))
   }, [])
+
+  
+  const handleClear = () => {
+    setF('')
+    setPrec(2)
+    setXn('')
+    setXn1('')
+    setResult(null)
+    setError(null)
+  }
 
   async function calcular() {
     if (!f.trim()) { setError('Ingresa una función.'); return }
@@ -73,11 +84,11 @@ export default function Secante() {
       <div className="input-col-2">
         <div className="form-group">
           <label className="form-label">Ingresar xₙ</label>
-          <input className="form-number" type="number" value={xn} step={2} onChange={e => setXn(parseFloat(e.target.value))} />
+          <input className="form-number" type="number" value={xn} step={2} placeholder='Ej: -10' onChange={e => setXn(parseFloat(e.target.value))} />
         </div>
         <div className="form-group">
           <label className="form-label">Ingresar xₙ₊₁</label>
-          <input className="form-number" type="number" value={xn1} step={2} onChange={e => setXn1(parseFloat(e.target.value))} />
+          <input className="form-number" type="number" value={xn1} step={2} placeholder='Ej: 10' onChange={e => setXn1(parseFloat(e.target.value))} />
         </div>
       </div>
       <PrecisionSlider value={prec} onChange={setPrec} />
@@ -126,6 +137,7 @@ export default function Secante() {
       teoria={teoria}
       inputs={inputs}
       onCalcular={loading ? null : calcular}
+      onClear={handleClear}
       result={resultPanel}
       codeRaw={code}
       iteraciones={result?.iteraciones}

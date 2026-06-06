@@ -9,6 +9,7 @@
  */
 
 import { useState, useEffect } from 'react'
+import { useLocalStorage } from '../../hooks/useLocalStorage'
 import { useSearchParams } from 'react-router-dom'
 import { useSettings } from '../../hooks/useSettings'
 import { useHistory } from '../../hooks/useHistory'
@@ -23,7 +24,7 @@ import MethodLayout, {
 import IntegralChart from './IntegralChart'
 
 const COLS = [
-  { key: 'x',  label: 'xᵢ'    },
+  { key: 'x', label: 'xᵢ' },
   { key: 'fx', label: 'f(xᵢ)' },
 ]
 
@@ -79,14 +80,14 @@ export default function Simpson38() {
   const { push: pushHistory } = useHistory()
   const [searchParams] = useSearchParams()
 
-  const [f, setF]   = useState('')
-  const [a, setA]   = useState(0)
-  const [b, setB]   = useState(1)
-  const [n, setN]   = useState(9)
+  const [f, setF] = useLocalStorage('Simpson38_f', '')
+  const [a, setA] = useLocalStorage('Simpson38_a', '')
+  const [b, setB] = useLocalStorage('Simpson38_b', '')
+  const [n, setN] = useLocalStorage('Simpson38_n', '')
 
   const [resultado, setResultado] = useState(null)
-  const [error, setError]         = useState(null)
-  const [loading, setLoading]     = useState(false)
+  const [error, setError] = useState(null)
+  const [loading, setLoading] = useState(false)
 
   const MAX_OPTIMO = 500
   const MAX_ABSOLUTO = MAX_OPTIMO + 10
@@ -118,9 +119,18 @@ export default function Simpson38() {
 
   const nEsMultiplo3 = Number(n) > 0 && Number(n) % 3 === 0
 
+  
+  const handleClear = () => {
+    setF('')
+    setA('')
+    setB('')
+    setN('')
+    setError(null)
+  }
+
   async function calcular() {
-    if (!f.trim())      { setError('Ingresa una función f(x).'); return }
-    if (!nEsMultiplo3)  {
+    if (!f.trim()) { setError('Ingresa una función f(x).'); return }
+    if (!nEsMultiplo3) {
       setError(`Simpson 3/8 requiere n múltiplo de 3. Prueba con n=${multiplo3Cercano(Number(n))}.`)
       return
     }
@@ -170,26 +180,26 @@ export default function Simpson38() {
 
   const inputs = (
     <>
-      <FormulaInput value={f} onChange={setF} placeholder="Ejemplo: x**2 + sin(x)" />
+      <FormulaInput value={f} onChange={setF} placeholder="Ej: x**2 + sin(x)" />
       <div className="input-col-2">
         <div className="form-group">
           <label className="form-label">Límite inferior a</label>
-          <input className="form-number" type="number" value={a} step={0.5}
+          <input className="form-number" type="number" value={a} step={0.5} placeholder='Ej: 0'
             onChange={e => setA(parseFloat(e.target.value))} />
         </div>
         <div className="form-group">
           <label className="form-label">Límite superior b</label>
-          <input className="form-number" type="number" value={b} step={0.5}
+          <input className="form-number" type="number" value={b} step={0.5} placeholder='Ej: 1'
             onChange={e => setB(parseFloat(e.target.value))} />
         </div>
       </div>
       <div className="form-group">
         <label className="form-label">
           Número de intervalos n
-          <span style={{ marginLeft: 6, fontSize: '0.75rem', color: 'var(--slate)' }}>(múltiplo de 3)</span>
+          <span style={{ marginLeft: 6, fontSize: '0.75rem', color: 'var(--slate)' }}>(múltiplo de 3 &gt; 0)</span>
         </label>
         <input
-          className="form-number" type="number" min={3} step={3} value={n}
+          className="form-number" type="number" min={3} step={3} value={n} placeholder='Ej: 9'
           onChange={handleNChange}
           max={Number(n) > MAX_OPTIMO ? MAX_ABSOLUTO : undefined}
           style={{ borderColor: !nEsMultiplo3 && Number(n) > 0 ? 'var(--error, #ef4444)' : undefined }}
@@ -250,6 +260,7 @@ print(f"Integral ≈ {resultado:.8f}")`
       teoria={teoria}
       inputs={inputs}
       onCalcular={loading ? null : calcular}
+      onClear={handleClear}
       result={resultado ? <IntegralResultPanel resultado={resultado} /> : <EmptyPanel />}
       codeRaw={codeRaw}
       /* FIX #1: Tabla delegada al MethodLayout con IterTable compartido */

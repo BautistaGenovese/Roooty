@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useLocalStorage } from '../hooks/useLocalStorage'
 import { useSearchParams } from 'react-router-dom'
 import { useSettings } from '../hooks/useSettings'
 import { useHistory } from '../hooks/useHistory'
@@ -16,9 +17,9 @@ export default function Newton() {
   const { settings } = useSettings()
   const { push: pushHistory } = useHistory()
   const [searchParams] = useSearchParams()
-  const [f, setF] = useState('')
-  const [x0, setX0] = useState(-10)
-  const [prec, setPrec] = useState(2)
+  const [f, setF] = useLocalStorage('Newton_f', '')
+  const [x0, setX0] = useLocalStorage('Newton_x0', '')
+  const [prec, setPrec] = useLocalStorage('Newton_prec', 2)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -29,6 +30,15 @@ export default function Newton() {
     if (pf) setF(pf)
     if (px0 !== null) setX0(parseFloat(px0))
   }, [])
+
+  
+  const handleClear = () => {
+    setF('')
+    setPrec(2)
+    setX0('')
+    setResult(null)
+    setError(null)
+  }
 
   async function calcular() {
     if (!f.trim()) { setError('Ingresa una función.'); return }
@@ -69,7 +79,7 @@ export default function Newton() {
       <FormulaInput value={f} onChange={setF} />
       <div className="form-group">
         <label className="form-label">Ingresar x₀</label>
-        <input className="form-number" type="number" value={x0} step={2} onChange={e => setX0(parseFloat(e.target.value))} />
+        <input className="form-number" type="number" value={x0} step={2} placeholder='Ej: -10' onChange={e => setX0(parseFloat(e.target.value))} />
       </div>
       <PrecisionSlider value={prec} onChange={setPrec} />
       {error && <div className="alert alert-error">{error}</div>}
@@ -118,6 +128,7 @@ export default function Newton() {
       teoria={teoria}
       inputs={inputs}
       onCalcular={loading ? null : calcular}
+      onClear={handleClear}
       result={resultPanel}
       codeRaw={code}
       iteraciones={result?.iteraciones}
